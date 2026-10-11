@@ -14,7 +14,7 @@ or send HTTP requests interactively yourself; you run the compiled
 ## Playwright config contract
 
 The user's `playwright.config.ts` lives in `./qa-artifacts/`, next to its
-`node_modules`. Start from `runner-template/`, which already meets this contract. Run every command from **the
+`node_modules`. `qa-setup` copies `${CLAUDE_PLUGIN_ROOT}/runner-template/`, which already meets this contract. Run every command from **the
 directory that contains it**. All globs below are relative to that directory.
 It must define these projects:
 

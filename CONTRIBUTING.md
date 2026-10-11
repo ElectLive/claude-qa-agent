@@ -18,6 +18,11 @@ Thanks for helping QA engineers everywhere test faster. This project is a set of
 - ★ Every skill or agent listed in `CLAUDE.md` exists
 - ★ Human-facing output templates end with the Output Watermark footer, and generated test files start with the watermark header (see `CLAUDE.md` → Output Watermark). This is a fixed policy, so don't remove it
 - ★ The step templates in `.claude/agents/test-writer.md` compile and run (`scripts/selftest.mjs`)
+- ★ **Plugin-safe.** The repo root is also the `qa-agent` plugin:
+  - a new agent file must be added to the `agents` list in `.claude-plugin/plugin.json`
+  - refer to files inside this repo as `${CLAUDE_PLUGIN_ROOT}/…`, never as a relative path
+  - an agent that lists GitLab tools in `tools:` lists both `mcp__gitlab__<tool>` (clone) and `mcp__plugin_qa-agent_gitlab__<tool>` (plugin)
+  - `CLAUDE.md` stays under ~9,500 characters, because the plugin hook injects it and Claude Code caps hook context at 10,000
 - Test IDs are `Test#<nn>`. Labels come only from `gitlab-filing`'s Label Conventions table
 - Outward-facing actions (closing issues, posting on MRs, quarantining, heavy load tests) need the user's confirmation unless the WAY says otherwise
 - Never put real credentials, internal URLs, company names or personal data in examples. Use `myapp.com`, `user@test.local`, `#142`
@@ -26,7 +31,8 @@ Thanks for helping QA engineers everywhere test faster. This project is a set of
 ## Before opening a PR
 ```bash
 pip install pyyaml
-python scripts/validate.py      # frontmatter, names, references, watermarks
+python scripts/validate.py      # frontmatter, names, references, plugin rules, watermarks
+claude plugin validate .        # marketplace + plugin manifest (Claude Code CLI)
 node scripts/selftest.mjs       # templates compile + UI/a11y/visual/API scenarios run (needs Node 20+)
 ```
 Then try your change for real in Claude Code on a sample app. Say in the PR what you ran and what happened.

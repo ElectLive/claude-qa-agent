@@ -1,0 +1,53 @@
+{
+  "name": "qa-agent",
+  "displayName": "DevOps QA Agent",
+  "version": "1.0.0",
+  "description": "Sixteen QA workflows: Playwright-BDD E2E & API testing with built-in accessibility checks, GitLab bug filing, fix verification, MR test impact, flaky triage, test healing, traceability, release readiness, load tests, and CI setup.",
+  "author": {
+    "name": "Ghassen Azzouz",
+    "url": "https://github.com/GhassenAZZOUZ"
+  },
+  "homepage": "https://github.com/GhassenAZZOUZ/claude-qa-agent",
+  "repository": "https://github.com/GhassenAZZOUZ/claude-qa-agent",
+  "license": "MIT",
+  "keywords": ["qa", "testing", "playwright", "playwright-bdd", "gherkin", "gitlab", "accessibility", "test-automation", "devops"],
+  "skills": ["./.claude/skills"],
+  "agents": [
+    "./.claude/agents/benchmark-gap-story-writer.md",
+    "./.claude/agents/ci-diagnostician.md",
+    "./.claude/agents/competitor-benchmark.md",
+    "./.claude/agents/load-test-writer.md",
+    "./.claude/agents/mr-test-impact.md",
+    "./.claude/agents/test-execution-agent.md",
+    "./.claude/agents/test-healer.md",
+    "./.claude/agents/test-writer.md",
+    "./.claude/agents/user-story-enhancer.md"
+  ],
+  "mcpServers": {
+    "gitlab": {
+      "command": "npx",
+      "args": ["-y", "@zereight/mcp-gitlab@2.2.1"],
+      "env": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "${user_config.gitlab_token}",
+        "GITLAB_API_URL": "${user_config.gitlab_url}/api/v4",
+        "GITLAB_TOOLSETS": "core,issues,merge_requests,pipelines,ci",
+        "GITLAB_TOOLS": "upload_markdown"
+      }
+    }
+  },
+  "userConfig": {
+    "gitlab_url": {
+      "type": "string",
+      "title": "GitLab URL",
+      "description": "Base URL of your GitLab instance, without a trailing slash (https://gitlab.com, or your self-hosted URL)",
+      "default": "https://gitlab.com"
+    },
+    "gitlab_token": {
+      "type": "string",
+      "title": "GitLab access token",
+      "description": "Personal or project access token with the api scope. Stored in your system's secure credential store",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}

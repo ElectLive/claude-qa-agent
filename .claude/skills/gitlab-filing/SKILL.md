@@ -13,9 +13,12 @@ create, update, comment, and what to do when a call fails.
 
 ## Server and tool names
 
-The GitLab MCP server is `@zereight/mcp-gitlab@2.2.1`, registered as `gitlab`
-in `.mcp.json` (template: `.mcp.example.json`). Tool names and parameters
-below were checked against that version's schemas:
+The GitLab MCP server is `@zereight/mcp-gitlab@2.2.1`. From a clone it's
+registered as `gitlab` in `.mcp.json` (template: `.mcp.example.json`); in the
+plugin it ships with the plugin, so every tool below is named
+`mcp__plugin_qa-agent_gitlab__<tool>` instead of `mcp__gitlab__<tool>`. Same
+tools, same parameters. Tool names and parameters below were checked
+against that version's schemas:
 
 - `mcp__gitlab__create_issue`
 - `mcp__gitlab__get_issue`

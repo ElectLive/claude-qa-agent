@@ -1,0 +1,17 @@
+{
+  "name": "devops-qa-agent",
+  "description": "DevOps QA Agent: QA workflows for Claude Code (Playwright-BDD testing, GitLab bug filing, CI, release readiness)",
+  "owner": {
+    "name": "Ghassen Azzouz",
+    "url": "https://github.com/GhassenAZZOUZ"
+  },
+  "plugins": [
+    {
+      "name": "qa-agent",
+      "source": ".",
+      "description": "Sixteen QA workflows: Playwright-BDD E2E & API tests, GitLab bugs, fix verification, MR test impact, flaky triage, test healing, release readiness, load tests.",
+      "category": "testing",
+      "tags": ["qa", "playwright", "gitlab", "testing", "accessibility"]
+    }
+  ]
+}

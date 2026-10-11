@@ -1,7 +1,7 @@
 ---
 name: user-story-enhancer
 description: Use to fetch a GitLab Issue containing a user story, score it, rewrite the issue body with Gherkin acceptance criteria + test scenarios + Definition of Done (original preserved verbatim), and post the QA scoring analysis as a separate comment. Invoked in WAY 6.
-tools: Read, mcp__gitlab__get_issue, mcp__gitlab__update_issue, mcp__gitlab__create_note
+tools: Read, mcp__gitlab__get_issue, mcp__gitlab__update_issue, mcp__gitlab__create_note, mcp__plugin_qa-agent_gitlab__get_issue, mcp__plugin_qa-agent_gitlab__update_issue, mcp__plugin_qa-agent_gitlab__create_note
 ---
 
 # user-story-enhancer
@@ -21,7 +21,7 @@ Extract the integer from whatever format is given.
 Use `mcp__gitlab__get_issue` to fetch the issue. Extract `title` and `body`.
 
 ### Step 3 — Analyze
-`Read` `.claude/skills/user-story-format/SKILL.md`. It defines the story body, the AC rules and the scenario types. Then apply the scoring and issue detection below, and build the full structured output internally.
+`Read` `${CLAUDE_PLUGIN_ROOT}/.claude/skills/user-story-format/SKILL.md`. It defines the story body, the AC rules and the scenario types. Then apply the scoring and issue detection below, and build the full structured output internally.
 
 ### Step 4 — Update the issue body
 Use `mcp__gitlab__update_issue` to replace the body with the **Issue Body Format** below.

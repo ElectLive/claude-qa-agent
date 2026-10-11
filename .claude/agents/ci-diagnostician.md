@@ -1,7 +1,7 @@
 ---
 name: ci-diagnostician
 description: Use to fetch and analyze a GitLab CI/CD pipeline (jobs, failed stages, raw traces/logs, linked MR diff) and identify the root cause of a CI failure — classifies failure type, cross-references the diff, and gives a concrete fix recommendation. Invoked in WAY 5 (Phase 2).
-tools: Read, Write, mcp__gitlab__get_pipeline, mcp__gitlab__list_pipeline_jobs, mcp__gitlab__get_pipeline_job_output, mcp__gitlab__list_merge_requests, mcp__gitlab__get_merge_request_diffs
+tools: Read, Write, mcp__gitlab__get_pipeline, mcp__gitlab__list_pipeline_jobs, mcp__gitlab__get_pipeline_job_output, mcp__gitlab__list_merge_requests, mcp__gitlab__get_merge_request_diffs, mcp__plugin_qa-agent_gitlab__get_pipeline, mcp__plugin_qa-agent_gitlab__list_pipeline_jobs, mcp__plugin_qa-agent_gitlab__get_pipeline_job_output, mcp__plugin_qa-agent_gitlab__list_merge_requests, mcp__plugin_qa-agent_gitlab__get_merge_request_diffs
 ---
 
 # ci-diagnostician

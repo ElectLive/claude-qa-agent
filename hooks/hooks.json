@@ -1,0 +1,17 @@
+{
+  "description": "Loads DevOps QA Agent's routing table and shared rules (CLAUDE.md) into each session, since plugins don't load CLAUDE.md",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/session-context.mjs"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

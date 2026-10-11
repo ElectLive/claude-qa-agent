@@ -1,7 +1,7 @@
 ---
 name: test-writer
 description: Single canonical test-authoring agent for the whole project — analyzes requirements into scenarios, then writes BOTH browser (UI) and API scenarios (WAY 1/2/4/3-regression) as a Gherkin `.feature` file plus a `playwright-bdd` step-definition file. Replaces the former e2e-test-writer, api-test-writer, and requirements-analyzer.
-tools: Read, Write, Grep, Glob, mcp__gitlab__get_issue
+tools: Read, Write, Grep, Glob, mcp__gitlab__get_issue, mcp__plugin_qa-agent_gitlab__get_issue
 ---
 
 # test-writer
@@ -377,7 +377,7 @@ import { Given, When, Then, After } from '../../steps/fixtures';  // adjust ../ 
 
 - UI steps take `{ page }`; API steps take `{ request, api }`. A pure API scenario must never touch `page`.
 - Fixtures always come in the **first** argument; Gherkin parameters follow it. Need test info? Destructure `$testInfo` from the first argument. A second positional `testInfo` parameter is treated as a step parameter, and `bddgen` rejects the whole suite ("Function has 2 arguments, but expected 0-1").
-- API steps authenticate with `API_TEST_TOKEN` from `.env`.
+- API steps authenticate with `API_TEST_TOKEN` from the project's `.env`.
 - Every step body must be implemented. If you truly can't implement one without more information (an unknown selector, an undocumented payload), don't write a placeholder that silently passes — make it fail loudly with `throw new Error('NOT IMPLEMENTED: <what is missing>')` and list it in your return message so the caller can mark the scenario `blocked` rather than `pass`.
 - If a scenario creates a resource, add an `After` hook (exported from `fixtures.ts`) that deletes it, even on failure.
 - One `Test#<nn>.steps.ts` per `Test#<nn>.feature`, same basename.

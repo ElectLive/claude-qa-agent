@@ -46,10 +46,11 @@ Every generated `.feature`/`.steps.ts` test file starts with the same attributio
 
 ## Sixteen Modes
 
-Each mode ("WAY") is a skill in `.claude/skills/`. Type a trigger phrase, or `/<skill>` directly. Only the triggered WAY's instructions are loaded.
+Each mode ("WAY") is a skill. Type a trigger phrase, or `/<skill>` directly (`/qa-agent:<skill>` with the plugin). Only the triggered WAY's instructions are loaded.
 
 | WAY | Skill | Trigger | What happens |
 |---|---|---|---|
+| 0 | `qa-setup` | `qa setup` | Prepare a project: test runner, `.env` values, GitLab check |
 | 1 | `e2e-session` | `e2e it` | Requirements → browser tests (+a11y) → run → heal locator failures → file bugs → session report |
 | 2 | `api-session` | `api it` | OpenAPI → API tests → run (schema, perf) → file bugs → API report |
 | 3 | `quick-bug` | `report it` | One-line bug → GitLab issue + a regression test |
@@ -89,10 +90,13 @@ All tools except Claude are free and open source.
 devops-qa-agent/
 ├── CLAUDE.md                          # Routing table (16 WAYs → skills) + shared rules + watermark policy
 ├── README.md                          # This file
-├── LICENSE · CONTRIBUTING.md · SECURITY.md · CODE_OF_CONDUCT.md
+├── LICENSE · CONTRIBUTING.md · SECURITY.md · CODE_OF_CONDUCT.md · CHANGELOG.md
+├── .claude-plugin/                    # plugin.json (manifest, GitLab MCP, install-time settings) + marketplace.json
+├── hooks/hooks.json                   # Plugin SessionStart hook → scripts/session-context.mjs prints CLAUDE.md
 ├── runner-template/                   # package.json + playwright.config.ts meeting the config contract → copy to qa-artifacts/
 ├── scripts/
-│   ├── validate.py                    # Frontmatter, names, CLAUDE.md references, watermarks (CI)
+│   ├── validate.py                    # Frontmatter, names, CLAUDE.md references + size, plugin manifest, watermarks (CI)
+│   ├── session-context.mjs            # Plugin hook: loads CLAUDE.md rules into each session
 │   └── selftest.mjs                   # Runs test-writer's templates end to end on a demo app (CI)
 ├── .github/                           # CI workflow, issue + PR templates
 ├── .env.example                       # Copy to .env and fill in your values
@@ -103,7 +107,7 @@ devops-qa-agent/
 ├── .claude/
 │   ├── settings.example.json          # Copy to settings.json and fill in
 │   ├── skills/
-│   │   ├── e2e-session/ … heal-tests/   # 16 WAY skills, one folder each (see "Sixteen Modes")
+│   │   ├── qa-setup/ e2e-session/ … heal-tests/   # WAY 0–16 skills, one folder each (see "Sixteen Modes")
 │   │   ├── flaky-triage/flaky.mjs     # Run-history aggregator used by WAY 13
 │   │   ├── gitlab-filing/             # Shared: GitLab tools, labels, attachments, failure handling
 │   │   ├── bug-report/                # Shared: severity × priority + bug body + when not to file
@@ -133,46 +137,51 @@ devops-qa-agent/
 
 ## Setup
 
-### 1. Prerequisites
+### Prerequisites
 
 | Requirement | Version |
 |---|---|
-| [Claude Code](https://claude.com/claude-code) | Latest (any surface: terminal, VS Code, JetBrains, desktop) |
+| [Claude Code](https://claude.com/claude-code) | 2.1+ (terminal, VS Code, JetBrains or desktop) |
 | Node.js | 20+ |
 | A GitLab project + access token | gitlab.com or self-hosted, scope `api` |
 | Optional: k6 or Docker | For WAY 15 |
 
-### 2. Get the agent
+### Option A — Install as a plugin (recommended)
+
+Use it in any project, with updates through the marketplace. In Claude Code, from your app's repository:
+
+```
+/plugin marketplace add GhassenAZZOUZ/claude-qa-agent
+/plugin install qa-agent@devops-qa-agent
+```
+
+Pick **project scope** when asked, so it's enabled only in repos where you do QA (an enabled plugin's skill list is in context every turn). Claude Code then asks for your **GitLab URL** and **token**. The token goes to your system's secure credential store, not a file. Then:
+
+```
+qa setup
+```
+
+WAY 0 copies the test runner into `qa-artifacts/`, installs Playwright, adds the per-project values (`GITLAB_PROJECT_ID`, `STAGING_URL`, …) to your `.env`, and checks GitLab access. Skills are named `/qa-agent:<skill>` (e.g. `/qa-agent:e2e-session`), but trigger phrases like `e2e it` work the same.
+
+Update later with `/plugin marketplace update devops-qa-agent`. Change the GitLab settings with `/plugin configure qa-agent@devops-qa-agent`.
+
+### Option B — Clone and work inside the repo
+
+Best for contributing, or for keeping one QA workspace separate from your app.
 
 ```bash
 git clone https://github.com/GhassenAZZOUZ/claude-qa-agent.git
 cd claude-qa-agent
-```
-
-Use this folder as your QA workspace: open Claude Code here. The tests it writes go to `qa-artifacts/`, which is gitignored. `ci setup` (WAY 10) exports them into your app's repo when you want them in a pipeline.
-
-### 3. Install the test runner
-
-```bash
-cp -r runner-template/. qa-artifacts/
-cd qa-artifacts && npm install && npx playwright install chromium && cd ..
-```
-
-### 4. Configure
-
-```bash
 cp .env.example .env
 cp .mcp.example.json .mcp.json
 cp .claude/settings.example.json .claude/settings.json
 ```
 
-Fill in the same values in all three: your GitLab token, URL and project ID, plus your staging/prod/feature URLs.
+Fill in the same GitLab token, URL and project ID plus your environment URLs in all three files (all gitignored). Then start Claude Code in the folder and run `qa setup`.
 
-> **Why three files?** `.env` is read by your shell. `settings.json` passes env vars to Claude Code and its MCP servers. `.mcp.json` declares the GitLab MCP server. All three are gitignored.
+### Verify
 
-### 5. Verify
-
-Start Claude Code in the folder and type `/mcp`: `gitlab` should show as connected. Then try a mode that doesn't need GitLab:
+Type `/mcp`: `gitlab` (plugin: `plugin:qa-agent:gitlab`) should be connected. Then try a mode that doesn't need GitLab:
 
 ```
 write it "Users can reset their password from the login page via an emailed link" App: https://staging.myapp.com

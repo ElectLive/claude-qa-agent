@@ -19,6 +19,17 @@ jobs:
       - run: pip install pyyaml
       - run: python scripts/validate.py
 
+  plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install -g @anthropic-ai/claude-code
+      - run: claude plugin validate .
+      - run: claude plugin validate .claude-plugin/plugin.json
+
   selftest:
     runs-on: ubuntu-latest
     steps:

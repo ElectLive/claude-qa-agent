@@ -9,7 +9,7 @@ description: WAY 13 — find flaky tests across recent runs and quarantine them 
 From the directory containing `playwright.config.ts` (normally `qa-artifacts/`):
 
 ```bash
-node ../.claude/skills/flaky-triage/flaky.mjs runs <window=10> .
+node "${CLAUDE_PLUGIN_ROOT}/.claude/skills/flaky-triage/flaky.mjs" runs <window=10> .
 ```
 
 The script reads the last N `runs/*/results.json` and prints, per scenario: its outcome history, flips, flip rate, a verdict (`flaky` | `consistent-fail` | `stable-pass` | `insufficient-data`), `changedDuringWindow` (the `.feature`/`.steps.ts` changed after the window started), and `unquarantine` (a quarantined test with 10 straight passes). Outcomes that say nothing about stability are excluded from the counts: `no-baseline` (first visual run) and `network`.
