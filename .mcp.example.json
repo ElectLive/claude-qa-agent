@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "gitlab": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@zereight/mcp-gitlab@2.2.1"
+      ],
+      "env": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_TOKEN}",
+        "GITLAB_API_URL": "${GITLAB_URL}/api/v4",
+        "GITLAB_TOOLSETS": "core,issues,merge_requests,pipelines,ci",
+        "GITLAB_TOOLS": "upload_markdown"
+      }
+    }
+  }
+}

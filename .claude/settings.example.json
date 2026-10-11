@@ -1,0 +1,19 @@
+{
+  "env": {
+    "GITLAB_TOKEN": "your_gitlab_personal_access_token",
+    "GITLAB_PROJECT_ID": "your-project-id",
+    "GITLAB_URL": "https://gitlab.com",
+    "STAGING_URL": "https://staging.myapp.com",
+    "PROD_URL": "https://myapp.com",
+    "FEATURE_BASE_URL": "https://feature.myapp.com",
+    "API_TEST_TOKEN": "test-bearer-token-here",
+    "API_PERF_THRESHOLD_MS": "2000"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npx *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)"
+    ]
+  }
+}

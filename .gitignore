@@ -1,0 +1,21 @@
+# Environment & secrets
+.env
+.mcp.json
+.claude/settings.json
+.claude/settings.p*.json
+credentials/
+
+# QA artifacts (generated locally)
+qa-artifacts/
+
+# Playwright
+.playwright-mcp/
+playwright-report/
+test-results/
+.features-gen/
+
+# Node
+node_modules/
+
+# Self-test scratch (scripts/selftest.mjs)
+.selftest/

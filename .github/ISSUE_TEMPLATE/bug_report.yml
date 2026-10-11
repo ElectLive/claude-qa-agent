@@ -1,0 +1,37 @@
+name: Bug report
+description: A WAY, agent, template or script didn't behave as documented
+labels: [bug]
+body:
+  - type: input
+    id: way
+    attributes:
+      label: WAY / skill / agent
+      placeholder: "WAY 9 — verify-fix"
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: What you typed
+      description: The trigger phrase and inputs. Remove tokens, internal URLs and personal data
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Agent output, error messages, the file it wrote
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: "Claude Code 2.x · @playwright/test 1.63 · playwright-bdd 9.2 · @zereight/mcp-gitlab 2.2.1"

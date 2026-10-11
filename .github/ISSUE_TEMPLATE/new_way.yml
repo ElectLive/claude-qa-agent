@@ -1,0 +1,24 @@
+name: New WAY / feature
+description: Propose a new mode or a change to an existing one
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The QA problem
+      description: What do you do by hand today that this would automate?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Trigger phrase, inputs, steps, outputs (files, GitLab/GitHub actions)
+    validations:
+      required: true
+  - type: dropdown
+    id: shape
+    attributes:
+      label: Skill or agent?
+      description: See CONTRIBUTING.md → "Skill or agent?"
+      options: [Skill (workflow / rubric), Agent (heavy I/O or restricted tools), Not sure]
