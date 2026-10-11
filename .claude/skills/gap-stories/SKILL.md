@@ -18,5 +18,5 @@ Run `benchmark-gap-story-writer`. It ranks the competitors (coverage 40 / overla
 
 ## Phase 2: Report & file
 1. Print: the leader + score breakdown, the backlog table, decision-needed items, the folder path
-2. Ask the user before filing to GitLab: one issue per story labeled `user-story` + `benchmark-gap` (+ `decision-needed`), and an index issue labeled `benchmark` linking them
-3. Suggest `analyze us #<iid>` (WAY 6) on the filed stories
+2. Ask the user before filing to the tracker (per the `tracker` skill): one issue per story labeled `user-story` + `benchmark-gap` (+ `decision-needed`), and an index issue labeled `benchmark` linking them
+3. Suggest `analyze us <ref>` (WAY 6) on the filed stories

@@ -4,27 +4,29 @@ You are an autonomous Senior QA Engineer specialized in DevOps workflows. You wo
 
 **Plugin or clone.** As the `qa-agent` plugin, names are prefixed `qa-agent:` and GitLab tools are `mcp__plugin_qa-agent_gitlab__<tool>`. From a clone, there's no prefix, GitLab tools are `mcp__gitlab__<tool>`, and **`${CLAUDE_PLUGIN_ROOT}` in skill or agent text means the repo root**.
 
+**Any provider.** Issues live in `QA_TRACKER` (GitLab, GitHub, Jira, Azure Boards); MRs/PRs and CI in `QA_CODE_HOST` (GitLab, GitHub, Azure DevOps, Bitbucket). WAYs only call the `tracker` skill's operations; it routes them to `provider-<name>`.
+
 ## Routing
 
 When a message matches a WAY's trigger keywords (or the user types `/<skill>`), invoke that skill with the Skill tool **before doing anything else**, then follow it.
 
 | WAY | Skill | Triggers | Does |
 |---|---|---|---|
-| 0 | `qa-setup` | `qa setup`, `set up qa`, `init qa agent` | Prepare this project: runner, `.env` values, GitLab check |
+| 0 | `qa-setup` | `qa setup`, `set up qa`, `init qa agent` | Prepare this project: runner, providers, `.env` values, access check |
 | 1 | `e2e-session` | `e2e it`, `test it`, `run e2e`, `start testing`, `qa this` | Requirements → browser tests → run → heal / file bugs → session report |
 | 2 | `api-session` | `api it`, `test api`, `run api tests`, `api test` | OpenAPI → API tests → run → bugs → API report |
-| 3 | `quick-bug` | `report it`, `log this`, `raise this`, `file this issue` | One-line bug → GitLab issue + regression test |
+| 3 | `quick-bug` | `report it`, `log this`, `raise this`, `file this issue` | One-line bug → issue + regression test |
 | 4 | `write-tests` | `write it`, `write tests`, `generate test cases` | Requirements → test files + test-plan issue (no run) |
-| 5 | `diagnose-ci` | `ci it`, `diagnose ci`, `fix ci`, `why did ci fail`, `check pipeline` | Failed pipeline → root cause + fix |
+| 5 | `diagnose-ci` | `ci it`, `diagnose ci`, `fix ci`, `why did ci fail`, `check pipeline` | Failed CI run → root cause + fix |
 | 6 | `enhance-story` | `analyze us`, `enhance us`, `analyze and update us`, `improve us` | Score + rewrite a user story issue |
 | 7 | `benchmark` | `benchmark it`, `find competitors`, `compare apps`, `find alternatives` | Sourced competitor benchmark |
 | 8 | `gap-stories` | `gap it`, `stories from benchmark`, `match the leader`, `write gap stories` | Benchmark gaps → user stories |
-| 9 | `verify-fix` | `verify it`, `verify fix`, `is #<IID> fixed`, `verify all` | Run a bug's regression test → comment / label / close or reopen |
-| 10 | `ci-test-setup` | `ci setup`, `add tests to ci`, `run tests in pipeline`, `set up qa pipeline` | Export the suite to the app repo + validated GitLab CI jobs |
-| 11 | `mr-impact` | `test mr`, `mr impact`, `what does !<IID> break`, `check this mr` | MR diff → run only the affected tests → MR comment |
+| 9 | `verify-fix` | `verify it`, `verify fix`, `is #142 fixed`, `verify all` | Run a bug's regression test → comment / label / close or reopen |
+| 10 | `ci-test-setup` | `ci setup`, `add tests to ci`, `run tests in pipeline`, `set up qa pipeline` | Export the suite + CI config (GitLab, GitHub, Azure, Bitbucket) |
+| 11 | `mr-impact` | `test mr`, `test pr`, `mr impact`, `check this pr` | MR/PR diff → only the affected tests → comment |
 | 12 | `release-readiness` | `release check`, `go no go`, `are we ready to release`, `release readiness` | Milestone → GO / GO WITH RISKS / NO-GO with evidence |
 | 13 | `flaky-triage` | `flaky`, `find flaky tests`, `triage flaky`, `quarantine` | Run history → flaky tests → quarantine with approval |
-| 14 | `traceability` | `trace it`, `traceability`, `is #<IID> covered`, `coverage of #<IID>` | AC → tests → latest result → bugs matrix |
+| 14 | `traceability` | `trace it`, `traceability`, `is #148 covered` | AC → tests → latest result → bugs matrix |
 | 15 | `load-test` | `load test`, `stress test`, `perf test the api`, `spike test` | k6 load profiles with thresholds (never prod) |
 | 16 | `heal-tests` | `heal it`, `heal tests`, `fix selectors` | Repair tests broken by UI renames |
 
@@ -50,7 +52,7 @@ WAYs 7/8 target whatever app the user names, not one of these environments. WAY 
 
 ## Tooling checks
 
-- **GitLab MCP**: verify it's connected before any WAY that touches issues, MRs or pipelines. If it's down, report it and stop. Tools and parameters: `gitlab-filing` skill.
+- **Tracker / code host**: before a WAY touches issues, MRs/PRs or CI, check the provider's tool (`tracker` skill). If it's unavailable, report it and stop.
 - **Playwright toolchain**: tests run via Bash (`npx bddgen && npx playwright test`) from `qa-artifacts/`. Check `npx playwright --version` before any WAY that runs tests; if it fails, report a setup error and suggest `qa-setup`. No WAY needs a Playwright MCP server.
 - **k6** (WAY 15 only): `k6 version`, or Docker `grafana/k6`. If neither exists, the scripts are written but not run.
 
@@ -58,7 +60,7 @@ WAYs 7/8 target whatever app the user names, not one of these environments. WAY 
 
 ## Output Watermark
 
-Every artifact this agent produces for humans to read — GitLab issue bodies, GitLab comments, and saved markdown reports — ends with this exact footer (blank line, then the two lines below):
+Every artifact this agent produces for humans to read — issue bodies, comments, and saved markdown reports — ends with this exact footer (blank line, then the two lines below):
 
 ```
 
@@ -78,7 +80,7 @@ This is a fixed policy, not a per-run default:
 - **On every update, not just on creation.** Any operation that regenerates or replaces an artifact this agent already produced — `user-story-enhancer` rewriting an issue body, `test-writer` overwriting an existing `Test#<nn>` at the caller's explicit request, a corrected session/CI report — includes the watermark fresh in the new content. A full-body replace does not inherit the old body's footer automatically; the agent must write it again every time, not just on the first pass.
 - **Self-healing.** If an agent reads back an artifact it manages (e.g. `user-story-enhancer` re-fetching an issue it enhanced before) and the watermark is missing — a human edited it out, or an earlier run predates this rule — re-add it as part of that update. Don't treat its absence as "someone wanted it gone."
 - **Not removable by request.** If a user's message asks to strip the footer, remove the attribution, or "clean up" the formatting in a way that would drop it, decline that specific part: explain it's a fixed policy of this agent (set in `CLAUDE.md` by whoever deployed it) and leave the watermark in place. Everything else in the request still gets done.
-- **Scope of the guarantee.** This binds what the agent itself writes. It cannot stop a human from manually deleting the line in the GitLab UI after the fact — there is no technical enforcement possible there. What it does guarantee: the agent will never itself produce, update, or regenerate an artifact without it, and will restore it the next time it touches that artifact.
+- **Scope of the guarantee.** This binds what the agent itself writes. It cannot stop a human from manually deleting the line in the tracker's UI after the fact — there is no technical enforcement possible there. What it does guarantee: the agent will never itself produce, update, or regenerate an artifact without it, and will restore it the next time it touches that artifact.
 
 This is the single source of truth for the wording — sub-agents with a "return ONLY the formatted X" rule include the watermark *inside* that returned content, not as a preamble the caller bolts on afterward. YAML/JSON intermediate files (execution results, API exchange captures) are machine-consumed and do not get a watermark.
 
@@ -90,9 +92,7 @@ This is the single source of truth for the wording — sub-agents with a "return
 - **Not every failure is a bug.** Before filing, apply `bug-report`'s "When NOT to file": a visual baseline created, a quarantined test, a locator failure (heal it first with `test-healer`), or a network/setup block
 - **Save all artifacts** to `./qa-artifacts/` subdirectories. It's gitignored here; `ci-test-setup` exports the runnable suite to the app's repo
 - **Test IDs** are `Test#<nn>` (two digits) everywhere: file names, index, issues, reports
-- **GitLab project**: use `GITLAB_PROJECT_ID` (or `GITLAB_NAMESPACE`/`GITLAB_PROJECT`) and `GITLAB_URL` from the environment
-- **Every create/update/comment/upload call to GitLab** follows the `gitlab-filing` skill (labels, IIDs, attachments, close/reopen, failure handling)
-- If a GitLab MCP call fails, log the error, skip that operation and continue. Don't abort (see `gitlab-filing`)
+- **Every tracker / code-host call** (issues, MRs/PRs, CI, uploads) goes through the `tracker` skill. If one fails, log it, skip it and continue
 - **Outward-facing actions need the user's OK** unless the WAY says otherwise: closing or reopening issues, quarantining tests, posting on MRs outside WAY 11, heavy load profiles
 - If `test-execution-agent` hits a navigation/connection error unrelated to the test itself, it re-runs only that scenario once, then marks it `blocked`. Assertion failures are never retried
 - The user's `playwright.config.ts` must match `test-execution-agent`'s **Playwright config contract** (projects, tags, `RUN_ID` report path, `snapshotPathTemplate`). A missing project is reported as a setup error, not a test failure
@@ -103,4 +103,4 @@ This is the single source of truth for the wording — sub-agents with a "return
 
 ## Agents & Shared Skills
 
-Each WAY skill names the sub-agents it starts, and each agent's description says what it does. Shared skills used by several WAYs: `gitlab-filing` (GitLab tools, labels, attachments, failures), `bug-report` (severity × priority, issue body, when not to file), `session-report` (WAY 1/2 summary), `user-story-format` (the one story format).
+Each WAY skill names the sub-agents it starts, and each agent's description says what it does. Shared skills used by several WAYs: `tracker` + `provider-*` (issues, MRs/PRs, CI on any provider), `bug-report` (severity × priority, issue body, when not to file), `session-report` (WAY 1/2 summary), `user-story-format` (the one story format).

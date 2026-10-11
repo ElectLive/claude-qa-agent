@@ -26,7 +26,7 @@ For each `flaky` scenario, read the error messages in its history:
 
 ## Phase 3: Quarantine (with the user's approval, per test)
 1. Add `@quarantine` to the scenario's tag line in its `.feature` (keep the watermark header)
-2. File a GitLab issue labeled `flaky-test` with the history table, the suspected cause, and a fix suggestion (a wait-for condition instead of a timeout, test data isolation, disabling animations). This is a **test** issue, not a product bug
+2. File an issue labeled `flaky-test` (`issue.create`) with the history table, the suspected cause, and a fix suggestion (a wait-for condition instead of a timeout, test data isolation, disabling animations). This is a **test** issue, not a product bug
 3. Quarantined tests keep running. Callers just don't file bugs for them (`quarantined: true` in results), so triage can see when they stabilize
 
 **Unquarantine:** for every `unquarantine: true` scenario, propose removing the tag and closing its `flaky-test` issue.

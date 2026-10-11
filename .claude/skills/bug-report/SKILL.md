@@ -1,14 +1,14 @@
 ---
 name: bug-report
-description: Classify a bug's severity × priority and format a developer-ready GitLab Issue body for it — from a failed test (WAY 1 Phase 4, WAY 2 Phase 3) or from the WAY 3 quick-report shorthand ("report it", "log this", "raise this", "file this issue"). Replaces the former severity-classifier and bug-reporter agents.
+description: Classify a bug's severity × priority and format a developer-ready issue body for it (any tracker) — from a failed test (WAY 1 Phase 4, WAY 2 Phase 3) or from the WAY 3 quick-report shorthand ("report it", "log this", "raise this", "file this issue"). Replaces the former severity-classifier and bug-reporter agents.
 ---
 
 # bug-report
 
 Turns one bug into: a **Severity × Priority** pair, a **label set**, a
-**title**, and a **GitLab Issue body**. Apply it in the main session, once per
+**title**, and an **issue body** in Markdown (the provider skill converts it where needed). Apply it in the main session, once per
 bug — the failure data (or the user's shorthand) is already in context, so no
-sub-agent is needed. Filing the issue afterwards follows the `gitlab-filing`
+sub-agent is needed. Filing the issue afterwards follows the `tracker`
 skill.
 
 ## Input
@@ -49,7 +49,7 @@ Derive **Expected Result** from the area and steps (what a correct app does). If
 - Never Sev-1 for a cosmetic issue; never Sev-4 for a security issue
 
 ### Labels
-`bug`, `sev-<n>`, `p<n>`, plus the context label: `e2e` (browser), `api` (API), `accessibility` (axe violation). Use only labels from `gitlab-filing`'s Label Conventions table.
+`bug`, `sev-<n>`, `p<n>`, plus the context label: `e2e` (browser), `api` (API), `accessibility` (axe violation). Use only labels from the `tracker` skill's label conventions.
 
 Write down the classification with a one-sentence rationale. It goes in the issue body and in the session summary.
 
@@ -87,7 +87,7 @@ the symptom, not the suspected cause.
 - Test Case: [Test#<nn> — path to its .feature, or "manual report" for WAY 3]
 
 ## Artifacts
-- Screenshot: [markdown returned by `upload_markdown`, see `gitlab-filing` → "Attaching files"] (or "No screenshot captured")
+- Screenshot: [snippet returned by `file.attach`, see the `tracker` skill → Attachments] (or "No screenshot captured")
 - Console log: `[key error lines]` (if available)
 - Network log: `[endpoint + status]` (if available)
 - API exchange: `[api-responses/… path]` (API bugs)

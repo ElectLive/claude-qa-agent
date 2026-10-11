@@ -23,10 +23,15 @@ Thanks for helping QA engineers everywhere test faster. This project is a set of
   - refer to files inside this repo as `${CLAUDE_PLUGIN_ROOT}/…`, never as a relative path
   - an agent that lists GitLab tools in `tools:` lists both `mcp__gitlab__<tool>` (clone) and `mcp__plugin_qa-agent_gitlab__<tool>` (plugin)
   - `CLAUDE.md` stays under ~9,500 characters, because the plugin hook injects it and Claude Code caps hook context at 10,000
-- Test IDs are `Test#<nn>`. Labels come only from `gitlab-filing`'s Label Conventions table
+- Test IDs are `Test#<nn>`. Labels come only from the `tracker` skill's label conventions. Never call a provider directly from a WAY: use a `tracker` operation
 - Outward-facing actions (closing issues, posting on MRs, quarantining, heavy load tests) need the user's confirmation unless the WAY says otherwise
 - Never put real credentials, internal URLs, company names or personal data in examples. Use `myapp.com`, `user@test.local`, `#142`
-- A new WAY needs: its skill, a row in `CLAUDE.md`'s routing table, a usage example and a "What the agent produces" entry in `README.md`, plus any new labels in `gitlab-filing`
+- A new WAY needs: its skill, a row in `CLAUDE.md`'s routing table, a usage example and a "What the agent produces" entry in `README.md`, plus any new labels in `tracker`
+
+## Adding a provider
+1. Add `.claude/skills/provider-<name>/SKILL.md`: map every operation in the `tracker` skill's table to that provider's tool (prefer its official CLI or MCP server), plus its ref format, body format, labels/tags and attachments. Mark unsupported operations explicitly
+2. Add the value to the `QA_TRACKER` / `QA_CODE_HOST` lists and the vocabulary table in `tracker`, the `.env` block in `qa-setup`, `.env.example`, and a `ci-test-setup` template if it has CI
+3. Read-only commands must be tested against a real project before merging; say in the PR which operations you ran live
 
 ## Before opening a PR
 ```bash

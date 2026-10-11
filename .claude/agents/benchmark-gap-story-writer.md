@@ -102,7 +102,7 @@ Write to `./qa-artifacts/benchmarks/stories/<target-slug>-<YYYY-MM-DD>/`:
 - `US-<n>.md`: one per story (format above)
 - `index.md`: the summary below
 
-Return `index.md` content plus the list of story file paths to the caller. Do not file to GitLab yourself; the orchestrator does that via `gitlab-filing`.
+Return `index.md` content plus the list of story file paths to the caller. Do not file anything yourself; the caller does that through the `tracker` skill.
 
 ```markdown
 # Benchmark Gap Backlog — <Target>

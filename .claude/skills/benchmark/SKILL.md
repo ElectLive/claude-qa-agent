@@ -16,5 +16,5 @@ Run `competitor-benchmark`. It fingerprints the target (for a repo, from docs **
 
 ## Phase 2: Report
 1. Print: competitors + overlap %, top differentiators, top gaps, report path
-2. Ask the user before filing it as a GitLab issue labeled `benchmark`
+2. Ask the user before filing it as an issue labeled `benchmark` (per the `tracker` skill)
 3. Suggest `gap it` (WAY 8) to turn the gaps into user stories

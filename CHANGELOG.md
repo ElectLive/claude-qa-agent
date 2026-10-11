@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.0 — 2026-10-11
+
+Works with any major provider, not just GitLab.
+
+- **Issue trackers:** GitLab, GitHub, Jira (Cloud/Data Center), Azure Boards. **Code hosts + CI:** GitLab, GitHub, Azure DevOps, Bitbucket Cloud. Chosen per project with `QA_TRACKER` / `QA_CODE_HOST`
+- New `tracker` skill (replaces `gitlab-filing`): one provider-neutral set of operations (`issue.*`, `change.*`, `ci.*`, `file.attach`) that every WAY calls
+- New `provider-gitlab`, `provider-github` (`gh` CLI), `provider-jira` (Atlassian MCP or REST, Markdown → wiki markup), `provider-azure-devops` (`az` CLI + REST, HTML bodies), `provider-bitbucket` (REST) skills
+- `ci-test-setup` writes GitLab CI, GitHub Actions, Azure Pipelines or Bitbucket Pipelines config
+- `user-story-enhancer` and `test-writer` no longer touch the tracker (the calling WAY fetches and files), so they work with every provider
+- `qa-setup` asks for the providers and checks access for each; secrets are never read into the conversation (only the non-secret `.env` keys are grepped)
+- GitLab token is now optional in the plugin settings
+
+**Verification:** GitLab operations were checked against `@zereight/mcp-gitlab@2.2.1` schemas. GitHub read operations were run against a live repo, including a full `trace it` through the plugin. Jira, Azure DevOps and Bitbucket follow their documented APIs and need field reports.
+
 ## 1.0.0 — 2026-10-11
 
 First public release.

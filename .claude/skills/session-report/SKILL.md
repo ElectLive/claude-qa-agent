@@ -9,13 +9,13 @@ Apply in the main session at the end of WAY 1 (Phase 5) or WAY 2 (Phase 4).
 Everything it needs is already in context, so it runs inline:
 - Environment URL (WAY 1) or API base URL + spec source (WAY 2)
 - `test-execution-agent`'s results YAML. Each entry has `status`, `page`, `a11y: { checked, violations }`, and for API scenarios the `api-responses/` capture
-- Bugs filed in this session: IID, title, labels (from the `bug-report` skill + `gitlab-filing`)
+- Bugs filed in this session: ref, title, labels (from the `bug-report` skill + `tracker`)
 
 ## Where it goes
 
 1. Save to `./qa-artifacts/sessions/session-<YYYY-MM-DD-HH-MM>.md` (WAY 1) or `./qa-artifacts/sessions/api-<YYYY-MM-DD-HH-MM>.md` (WAY 2)
 2. Print it to chat
-3. WAY 1: file it as a GitLab Issue labeled `qa-session-report` (per `gitlab-filing`), with the same body
+3. WAY 1: file it as an issue labeled `qa-session-report` (`issue.create`, per `tracker`), with the same body
 
 ## WAY 1 template
 
@@ -26,7 +26,7 @@ counting violations by `impact`.
 # QA Session Report
 **Date:** [ISO date]
 **Environment:** [URL]
-**Triggered by:** [Feature name or GitLab Issue #N]
+**Triggered by:** [Feature name or issue ref]
 
 ---
 
@@ -56,7 +56,7 @@ counting violations by `impact`.
 |---|---|---|
 | Test#04 | 🩹 healed: button "Submit" → "Send" | confirm the rename is intended |
 | Test#05 | 📸 visual baseline created | compared from the next run |
-| Test#06 | 🧊 quarantined (flaky) | tracked in #<flaky-test IID> |
+| Test#06 | 🧊 quarantined (flaky) | tracked in <flaky-test ref> |
 
 (or "none")
 
@@ -74,7 +74,7 @@ counting violations by `impact`.
 
 ## Bugs Filed
 
-| GitLab Issue | Title | Severity | Labels |
+| Issue | Title | Severity | Labels |
 |---|---|---|---|
 | #42 | [Login] Error message not shown on invalid password | Sev-3 | bug, sev-3, p2, e2e |
 
@@ -119,7 +119,7 @@ Endpoints tested: N · Test cases: N · ✅ Passed: N · ❌ Failed: N · ⚠️
 (or "none")
 
 ## Bugs Filed
-| GitLab Issue | Title | Severity | Labels |
+| Issue | Title | Severity | Labels |
 |---|---|---|---|
 
 ---
