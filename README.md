@@ -6,7 +6,13 @@ An autonomous QA agent for DevOps-oriented teams. Give it a GitLab Issue, a stag
 
 [![validate](https://github.com/GhassenAZZOUZ/claude-qa-agent/actions/workflows/validate.yml/badge.svg)](https://github.com/GhassenAZZOUZ/claude-qa-agent/actions/workflows/validate.yml)
 
-**Quick start:** [Setup](#setup) · **Modes:** [Sixteen Modes](#sixteen-modes) · **Help wanted:** [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
+**Quick start:** [Setup](#setup) · **Modes:** [Sixteen Modes](#sixteen-modes) · **See the output:** [examples/](examples/) · **Help wanted:** [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
+
+---
+
+## See It in Action
+
+From one user story (*"apply a discount code at checkout"*), the agent produces: a [test plan + runnable Gherkin/Playwright tests](examples/test-cases/checkout-discount-2026-10-09/), a [developer-ready bug](examples/bug-issue.md) for the failure it found, a [session report](examples/session-report.md), an [MR impact comment](examples/mr-impact-comment.md), a [traceability matrix](examples/traceability.md) and a [release go/no-go](examples/release-readiness.md). All on a fictional shop; see [examples/](examples/).
 
 ---
 
