@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.1 — 2026-10-11
+
+Provider adapters checked against the real thing.
+
+- **GitHub:** every write and CI path run live on a test repo (30 operations: labels, milestones, issues create/edit/comment/close/reopen/list, release-asset attachments, PRs, Actions runs and logs), plus a full `report it` through the plugin. Fixes: an empty-jobs failed run is now diagnosed as an invalid workflow file; ANSI colours stripped from logs; log retry + API fallback; `--event pull_request` for PR runs; screenshots attach automatically once `qa-setup` has created the `qa-artifacts` release
+- **Jira:** checked against Atlassian's published OpenAPI spec. Fixed: issue search now uses `/rest/api/2/search/jql` on Cloud (the old `/search` is being removed, CHANGE-2046), with Data Center still on `/search`; priority lookup uses `/priority/search` on Cloud
+- **Azure DevOps:** REST calls checked against Microsoft's 7.1 reference and `az` flags against `az` 2.91 + `azure-devops` 1.1. Fixed: `--project` is only passed to commands that accept it (`work-item update/show`, `relation add`, `repos pr …` reject it); the latest PR iteration lookup; the JSON-patch call that links an attachment to a work item
+- **Bitbucket:** checked against Atlassian's published Bitbucket Cloud spec. No changes needed
+- `validate.py` now rejects invisible control characters in instructions
+
 ## 1.1.0 — 2026-10-11
 
 Works with any major provider, not just GitLab.

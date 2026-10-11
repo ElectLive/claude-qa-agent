@@ -49,7 +49,7 @@ For each chosen provider, check the tool its skill needs:
 | azure-devops | `az version` plus the `azure-devops` extension (`az extension add --name azure-devops`) |
 | bitbucket | `curl` plus the settings above |
 
-Then run `project.check` (per `tracker` → the provider skill) for the tracker and the code host, and report the project or repo name each returns. On GitHub, offer to create the `tracker` label set once (`provider-github` → Labels).
+Then run `project.check` (per `tracker` → the provider skill) for the tracker and the code host, and report the project or repo name each returns. On GitHub, offer two one-time setups (`provider-github`): the `tracker` label set, and the `qa-artifacts` prerelease that screenshots are attached to. With that release in place, later WAYs attach screenshots without asking.
 
 ## 5. Summary
 Print what was created, changed, or skipped, plus a first command to try, e.g. `write it "<a small feature of this app>" App: <STAGING_URL>`.

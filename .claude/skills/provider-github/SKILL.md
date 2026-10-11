@@ -1,6 +1,6 @@
 ---
 name: provider-github
-description: How to perform the tracker skill's operations on GitHub (github.com or GitHub Enterprise) with the gh CLI — issues, pull requests, Actions workflow runs and logs, labels, attachments. Load it when QA_TRACKER or QA_CODE_HOST is github.
+description: How to perform the tracker skill's operations on GitHub (github.com or GitHub Enterprise) with the gh CLI — issues, pull requests, Actions workflow runs and logs, labels, attachments. Every write and CI path was run live against a test repo. Load it when QA_TRACKER or QA_CODE_HOST is github.
 ---
 
 # provider-github
@@ -27,9 +27,9 @@ Write every body to a temp file first and pass `--body-file <file>`, never `--bo
 | `change.diff` | `gh pr diff <n> -R $GITHUB_REPO --name-only`, then `gh pr diff <n> -R $GITHUB_REPO` (pipe through a filter for the files you need) |
 | `change.comment` | `gh pr comment <n> -R $GITHUB_REPO --body-file c.md` |
 | find the PR for a branch | `gh pr list -R $GITHUB_REPO --head <branch> --state all --json number,state -L 1` |
-| `ci.get_run` | `gh run view <run-id> -R $GITHUB_REPO --json status,conclusion,headBranch,headSha,event,jobs,url` (a run URL's last segment is the ID) |
-| `ci.job_log` | `gh run view <run-id> -R $GITHUB_REPO --log-failed \| tail -n 200`, or `--job <job-id> --log` for one job |
-| `ci.latest_run` | `gh run list -R $GITHUB_REPO --branch <branch> -L 1 --json databaseId,status,conclusion,headSha,url` |
+| `ci.get_run` | `gh run view <run-id> -R $GITHUB_REPO --json status,conclusion,headBranch,headSha,event,jobs,url` (a run URL's last segment is the ID). **`conclusion: failure` with an empty `jobs` list means the workflow file itself is invalid.** There are no logs then, so read the workflow file at `headSha`, parse it, and report a `config-failure` |
+| `ci.job_log` | `gh run view <run-id> -R $GITHUB_REPO --log-failed \| sed 's/\x1b\[[0-9;]*m//g' \| tail -n 200` (that strips ANSI colour codes), or `--job <job-id> --log` for one job. If either says "log not found" right after the run ends, wait ~20s and retry, or use `gh api repos/$GITHUB_REPO/actions/jobs/<job-id>/logs` |
+| `ci.latest_run` | `gh run list -R $GITHUB_REPO --branch <branch> -L 1 --json databaseId,event,status,conclusion,headSha,url`. Add `--event pull_request` when you want the PR's run rather than a push run |
 | `ci.lint` | no API. If `actionlint` is installed, run `actionlint <file>`. Otherwise check the YAML parses and say lint was skipped |
 | `project.check` | `gh repo view $GITHUB_REPO --json nameWithOwner,visibility` |
 
@@ -42,7 +42,7 @@ GitHub doesn't create labels on first use. Before filing the first time, create 
 ## Attachments
 GitHub's API has no endpoint for uploading files into issue bodies. In order of preference:
 1. **CI artifact link**: if the run happened in GitHub Actions, link the run's artifacts (`<run-url>#artifacts`)
-2. **Release asset**: with the user's OK, keep one prerelease named `qa-artifacts`. Create it once with `gh release create qa-artifacts -R $GITHUB_REPO --prerelease --title "QA artifacts" --notes "Screenshots attached to QA bug reports"`, then for each file `gh release upload qa-artifacts <file> -R $GITHUB_REPO --clobber`, and embed `![name](https://github.com/<owner>/<repo>/releases/download/qa-artifacts/<file>)`. Prefix the file name with the run ID so names don't collide. On private repos these links only work for people with repo access, which is the intended audience
+2. **Release asset**: if the repo has a prerelease named `qa-artifacts` (`gh release view qa-artifacts -R $GITHUB_REPO`), use it **without asking**. `qa-setup` created it with the user's consent. If it doesn't exist, ask once before creating it with `gh release create qa-artifacts -R $GITHUB_REPO --prerelease --title "QA artifacts" --notes "Screenshots attached to QA bug reports"`, then for each file `gh release upload qa-artifacts <file> -R $GITHUB_REPO --clobber`, and embed `![name](https://github.com/<owner>/<repo>/releases/download/qa-artifacts/<file>)`. Prefix the file name with the run ID so names don't collide. On private repos these links only work for people with repo access, which is the intended audience
 3. Otherwise keep the local path and label it "on the QA machine"
 
 ## Notes
