@@ -1,0 +1,45 @@
+name: evals
+
+# Runs the WAYs end to end (evals/) with a real model, so it costs tokens:
+# weekly, on demand, or on a PR a maintainer labels `run-evals`. Never on every push.
+on:
+  schedule:
+    - cron: "17 5 * * 1" # Mondays 05:17 UTC
+  workflow_dispatch:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  evals:
+    if: github.event_name != 'pull_request' || github.event.label.name == 'run-evals'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - run: npm install -g @anthropic-ai/claude-code
+      - name: No API key
+        if: env.ANTHROPIC_API_KEY == ''
+        run: echo "::warning::ANTHROPIC_API_KEY secret is not set, evals skipped"
+      # Write/Edit are granted so WAYs can write test files into the sandboxed workspace (without the
+      # grant, "no tests written" checks pass trivially). No Bash and no MCP tools are granted, and the
+      # GitLab MCP server isn't started (no mock), so a WAY can't reach a real tracker from here.
+      - name: Run evals
+        if: env.ANTHROPIC_API_KEY != ''
+        run: >-
+          claude plugin eval . --trust-plugin --no-publish --ablation none
+          --runs 1 --threshold 0.8 --max-cost-usd 10 --allow-tools Write Edit
+          --report evals-report.html
+      - uses: actions/upload-artifact@v7
+        if: always() && env.ANTHROPIC_API_KEY != ''
+        with:
+          name: evals-report
+          path: evals-report.html
+          if-no-files-found: ignore

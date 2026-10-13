@@ -26,7 +26,8 @@ Thanks for helping QA engineers everywhere test faster. This project is a set of
 - Test IDs are `Test#<nn>`. Labels come only from the `tracker` skill's label conventions. Never call a provider directly from a WAY: use a `tracker` operation
 - Outward-facing actions (closing issues, posting on MRs, quarantining, heavy load tests) need the user's confirmation unless the WAY says otherwise
 - Never put real credentials, internal URLs, company names or personal data in examples. Use `myapp.com`, `user@test.local`, `#142`
-- A new WAY needs: its skill, a row in `CLAUDE.md`'s routing table, a usage example and a "What the agent produces" entry in `README.md`, plus any new labels in `tracker`
+- A new WAY needs: its skill (★ with `Use when the user says "…"` trigger phrases in its description, none shared with another skill), a row in `CLAUDE.md`'s routing table with **one** short trigger taken from that list, a usage example and a "What the agent produces" entry in `README.md`, plus any new labels in `tracker`. Add a routing case to `evals/` for it
+- ★ Trigger phrases live in skill descriptions only. `CLAUDE.md` keeps one per WAY, so it stays well under its size cap
 
 ## Adding a provider
 1. Add `.claude/skills/provider-<name>/SKILL.md`: map every operation in the `tracker` skill's table to that provider's tool (prefer its official CLI or MCP server), plus its ref format, body format, labels/tags and attachments. Mark unsupported operations explicitly
@@ -40,6 +41,13 @@ python scripts/validate.py      # frontmatter, names, references, plugin rules, 
 claude plugin validate .        # marketplace + plugin manifest (Claude Code CLI)
 node scripts/selftest.mjs       # templates compile + UI/a11y/visual/API scenarios run (needs Node 20+)
 ```
+Changed a WAY's instructions? Also run its evals (`evals/`, real model calls, a few cents per routing case, about a dollar or two for an end-to-end case):
+```bash
+claude plugin eval . --case 'routing-*' --runs 1 --no-publish --ablation none   # cheap: does each trigger reach its WAY
+claude plugin eval . --runs 1 --no-publish --ablation none --max-cost-usd 10 --allow-tools Write Edit   # everything
+```
+`--allow-tools Write Edit` lets WAYs write into the eval's sandboxed workspace; without it, file checks can't pass and "wrote nothing" checks pass for the wrong reason. Cases grant no Bash and no MCP tools, and the GitLab server isn't started, so no eval can reach a real tracker. CI runs them weekly, on demand, or when a maintainer labels a PR `run-evals` (needs the `ANTHROPIC_API_KEY` secret).
+
 Then try your change for real in Claude Code on a sample app. Say in the PR what you ran and what happened.
 
 ## Commit style

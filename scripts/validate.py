@@ -3,6 +3,7 @@
 - skill folder name == skill name, agent file name == agent name
 - every skill/agent named in CLAUDE.md's tables exists
 - every human-facing template keeps the Output Watermark
+- every WAY skill lists its trigger phrases, the routing table's trigger is one of them, and no phrase routes to two skills
 - requirement-analysis rules live only in the requirements-analysis skill; its users point to it
 """
 import glob, os, re, sys
@@ -12,6 +13,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 errors = []
 names = {'skill': set(), 'agent': set()}
+descriptions = {}
 
 for kind, pattern in (('skill', '.claude/skills/*/SKILL.md'), ('agent', '.claude/agents/*.md')):
     for p in sorted(glob.glob(pattern)):
@@ -32,11 +34,29 @@ for kind, pattern in (('skill', '.claude/skills/*/SKILL.md'), ('agent', '.claude
         if fm.get('name') != expected:
             errors.append(f'{p}: name "{fm.get("name")}" != "{expected}"')
         names[kind].add(fm.get('name'))
+        if kind == 'skill':
+            descriptions[fm.get('name')] = str(fm.get('description', ''))
 
 claude = open('CLAUDE.md', encoding='utf-8').read()
 for row in re.findall(r'^\|\s*(\d+)\s*\|\s*`([a-z0-9-]+)`', claude, re.M):
     if row[1] not in names['skill']:
         errors.append(f'CLAUDE.md: WAY {row[0]} points to missing skill `{row[1]}`')
+
+# Routing: CLAUDE.md shows one short trigger per WAY; the full list lives in each skill's description
+def triggers(desc):
+    m = re.search(r'Use (?:it )?when the user says(.*?)(?:[—;(]|$)', desc, re.S)
+    return [t.lower().strip() for t in re.findall(r'"([^"]+)"', m.group(1))] if m else []
+owner = {}
+for n, skill, trig in re.findall(r'^\|\s*(\d+)\s*\|\s*`([a-z0-9-]+)`\s*\|\s*`([^`]+)`', claude, re.M):
+    phrases = triggers(descriptions.get(skill, ''))
+    if not phrases:
+        errors.append(f'{skill}: description has no "Use when the user says \"…\"" trigger list (WAY {n} routes on it)')
+    elif trig.lower() not in phrases:
+        errors.append(f'CLAUDE.md: WAY {n} trigger `{trig}` is not in {skill}\'s description triggers')
+    for ph in phrases:
+        if ph in owner and owner[ph] != skill:
+            errors.append(f'trigger "{ph}" routes to both {owner[ph]} and {skill}')
+        owner[ph] = skill
 section = claude.split('## Agents & Shared Skills', 1)[-1]
 for n in re.findall(r'^\|\s*`([a-z0-9-]+)`', section, re.M):
     if n not in names['skill'] | names['agent']:

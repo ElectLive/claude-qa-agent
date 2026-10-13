@@ -19,3 +19,6 @@ node_modules/
 
 # Self-test scratch (scripts/selftest.mjs)
 .selftest/
+
+# plugin eval output
+evals/results/

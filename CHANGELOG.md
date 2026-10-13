@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Evals** (`evals/`, `claude plugin eval`): routing cases (one per hard-to-route WAY, plus "no WAY"), the readiness gate (plain text → R-NN + questions, no tests written), and WAY 17 end to end (spec → `@api @integration` triples with chaining, cleanup, watermark). New `evals.yml` workflow: weekly, on demand, or on the `run-evals` label, needs `ANTHROPIC_API_KEY`. Cases grant no Bash/MCP, so they can't reach a tracker
+- **Capture scrubbing**: `api-responses/` files and `api-exchange` attachments now redact secret-named fields at any depth (password, token, api key, cookie, session, card, cvv, ssn, iban), response `set-cookie`, JWTs, non-placeholder emails and secret query params. Assertions still see real values. The self-test fails on a leak
+- **CLAUDE.md routing table** keeps one trigger per WAY; the full trigger lists live in skill descriptions only (CLAUDE.md 9,473 → 8,702 chars). `validate.py` now fails when a WAY skill has no trigger list, when the table's trigger isn't in it, or when one phrase routes to two skills
+
 - **New shared `requirements-analysis` skill**: the one definition of intake (text / issue / enhanced story / spec → requirements model), the readiness gate (Missing Information, unassertable outcomes, vague words, contradictions), requirement IDs, scenario categories + tags, and per-element checklists. `test-writer`, `user-story-enhancer`, `user-story-format`, WAY 1/4/14/17 and `benchmark-gap-story-writer` now use it instead of their own copies
 - **`R-NN` requirement IDs** for plain-text requirements (and issues without ACs): derived one per testable statement, confirmed by the user, saved as a `## Requirements` table in the test folder's index, cited by tests like ACs (`**Covers:** R-03`). `trace it <folder>` traces them
 - WAY 1/4/17 ask the gate's questions (and show the R-NN table) **before** starting `test-writer`, in one message

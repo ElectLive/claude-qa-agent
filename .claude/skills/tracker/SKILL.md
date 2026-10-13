@@ -94,7 +94,7 @@ If a label doesn't exist yet, the provider skill says whether to create it or ju
 
 ## 5. Attachments
 
-A local path like `runs/<id>/artifacts/…/test-failed-1.png` means nothing to a developer. Attach the file (`file.attach`) and put the returned snippet in the body. Attach only what helps reproduce: the failure screenshot, plus `error-context.md` or a short console excerpt. Never attach traces (`trace.zip`) or `api-responses/` captures unless you've checked they hold no tokens or personal data. If attaching fails or isn't supported, keep the local path, label it "on the QA machine", and carry on.
+A local path like `runs/<id>/artifacts/…/test-failed-1.png` means nothing to a developer. Attach the file (`file.attach`) and put the returned snippet in the body. Attach only what helps reproduce: the failure screenshot, plus `error-context.md` or a short console excerpt. Never attach traces (`trace.zip`, not scrubbed) or `api-responses/` captures unless you've checked they hold no tokens or personal data. The `api` fixture scrubs captures by key name and pattern, which catches the usual cases, not every case. If attaching fails or isn't supported, keep the local path, label it "on the QA machine", and carry on.
 
 ## 6. Failure handling
 
