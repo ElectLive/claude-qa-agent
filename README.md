@@ -116,17 +116,18 @@ All tools except Claude are free and open source.
 
 ```
 devops-qa-agent/
-├── CLAUDE.md                          # Routing table (17 WAYs → skills) + shared rules + watermark policy
+├── CLAUDE.md                          # Routing table (17 WAYs → skills, one trigger each) + shared rules + watermark policy
 ├── README.md                          # This file
 ├── LICENSE · CONTRIBUTING.md · SECURITY.md · CODE_OF_CONDUCT.md · CHANGELOG.md
 ├── .claude-plugin/                    # plugin.json (manifest, bundled GitLab MCP, install-time settings) + marketplace.json
 ├── hooks/hooks.json                   # Plugin SessionStart hook → scripts/session-context.mjs prints CLAUDE.md
 ├── runner-template/                   # package.json + playwright.config.ts meeting the config contract → copy to qa-artifacts/
 ├── scripts/
-│   ├── validate.py                    # Frontmatter, names, CLAUDE.md references + size, plugin manifest, watermarks (CI)
+│   ├── validate.py                    # Frontmatter, names, CLAUDE.md references + size, triggers, plugin manifest, watermarks (CI)
 │   ├── session-context.mjs            # Plugin hook: loads CLAUDE.md rules into each session
 │   └── selftest.mjs                   # Runs test-writer's templates end to end on a demo app (CI)
-├── .github/                           # CI workflow, issue + PR templates
+├── evals/                             # `claude plugin eval` cases: routing, readiness gate, WAY 17 end to end (CI: weekly / `run-evals` label)
+├── .github/                           # CI workflows (validate, evals), issue + PR templates
 ├── .env.example                       # Copy to .env and fill in your values
 ├── .mcp.example.json                  # Copy to .mcp.json (GitLab MCP only)
 ├── .gitignore
@@ -432,7 +433,7 @@ These are slower and depend on every service being up: run them on a schedule, n
 
 **WAY 2 (API session):**
 - `qa-artifacts/test-cases/[api-slug]-[date]/Test#<nn>.{md,feature,steps.ts}` — API test cases, same triple format
-- `qa-artifacts/api-responses/[endpoint]-[method]-[timestamp].json` — full req/resp capture
+- `qa-artifacts/api-responses/[endpoint]-[method]-[timestamp].json` — full req/resp capture, scrubbed (secret-named fields, JWTs, real-looking emails, secret query params)
 - `qa-artifacts/sessions/api-[timestamp].md` — API session summary
 - Tracker issues: one `bug` + `api` issue per failure
 
@@ -647,7 +648,7 @@ Help wanted. Open a "New WAY / feature" issue to discuss first.
 
 ## Contributing
 
-PRs are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: skill vs agent, conventions, and the two checks CI runs (`python scripts/validate.py`, `node scripts/selftest.mjs`). Security issues: see [SECURITY.md](SECURITY.md).
+PRs are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: skill vs agent, conventions, and the checks CI runs (`python scripts/validate.py`, `node scripts/selftest.mjs`, and the `evals/` suite weekly). Security issues: see [SECURITY.md](SECURITY.md).
 
 ## License
 

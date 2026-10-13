@@ -82,7 +82,7 @@ Capture happens inside the run. Nothing needs to be collected afterwards, only l
 | `error-context` | Playwright | `error-context.md`: the error, the failing locator's call log, and a **page snapshot at the moment of failure**. `test-healer` works from this file |
 | `console-errors` | `page` fixture in `steps/fixtures.ts` | inline text |
 | `network-failures` | `page` fixture | inline JSON (failed requests and 4xx/5xx responses) |
-| `api-exchange` | `api` fixture | inline JSON, also written to `api-responses/<METHOD>-<path-slug>-<timestamp>.json` for every API scenario, pass or fail |
+| `api-exchange` | `api` fixture | inline JSON, also written to `api-responses/<METHOD>-<path-slug>-<timestamp>.json` for every API scenario, pass or fail. Scrubbed by the fixture (secret-named fields, JWTs, non-placeholder emails, secret query params); assertions saw the real values |
 | `axe-results` | a11y step | inline JSON (see below) |
 
 Put the paths (and, for inline ones, the first few lines) in that scenario's `artifacts` entry in your output, and name the exact step where it failed. If an expected attachment is missing, say so. Don't invent a path.
