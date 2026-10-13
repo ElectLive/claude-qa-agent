@@ -1,0 +1,12 @@
+# GitLab MCP server for Codex, only needed when QA_TRACKER or QA_CODE_HOST is gitlab.
+# Merge this table into ~/.codex/config.toml. Never commit a real token: use a project access token
+# with the api scope, ideally from your shell environment rather than written here.
+[mcp_servers.gitlab]
+command = "npx"
+args = ["-y", "@zereight/mcp-gitlab@2.2.1"]
+
+[mcp_servers.gitlab.env]
+GITLAB_PERSONAL_ACCESS_TOKEN = "<your-gitlab-token>"
+GITLAB_API_URL = "https://gitlab.com/api/v4"   # or https://<your-gitlab>/api/v4
+GITLAB_TOOLSETS = "core,issues,merge_requests,pipelines,ci"
+GITLAB_TOOLS = "upload_markdown"

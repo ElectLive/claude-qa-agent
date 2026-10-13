@@ -27,6 +27,7 @@ Thanks for helping QA engineers everywhere test faster. This project is a set of
 - Outward-facing actions (closing issues, posting on MRs, quarantining, heavy load tests) need the user's confirmation unless the WAY says otherwise
 - Never put real credentials, internal URLs, company names or personal data in examples. Use `myapp.com`, `user@test.local`, `#142`
 - A new WAY needs: its skill (★ with `Use when the user says "…"` trigger phrases in its description, none shared with another skill), a row in `CLAUDE.md`'s routing table with **one** short trigger taken from that list, a usage example and a "What the agent produces" entry in `README.md`, plus any new labels in `tracker`. Add a routing case to `evals/` for it
+- ★ `AGENTS.md` is generated from `CLAUDE.md`: after editing `CLAUDE.md`, run `python scripts/codex.py build`. If `codex.py` stops because a phrase it rewrites changed, update its `REPLACEMENTS` too. Keep skill and agent text tool-neutral where you can ("read the file", "run the agent"), since Codex reads the same files
 - ★ Trigger phrases live in skill descriptions only. `CLAUDE.md` keeps one per WAY, so it stays well under its size cap
 
 ## Adding a provider

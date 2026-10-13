@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Codex support (experimental)**: `AGENTS.md`, generated from `CLAUDE.md` by `scripts/codex.py` with exact rewrites ("Skill tool"/"Agent tool"/plugin naming → tool-neutral, sub-agents run through Codex's own feature or inline from their agent file). `.agents/skills` exposes the same skills to Codex in this repo; `codex.py install <project>` links them user-wide and adds a replaceable block to the project's `AGENTS.md`. `codex/config.example.toml` for the GitLab MCP server. `validate.py` fails when `AGENTS.md` is stale. Not yet run end to end in Codex
+
 - **Evals** (`evals/`, `claude plugin eval`): routing cases (one per hard-to-route WAY, plus "no WAY"), the readiness gate (plain text → R-NN + questions, no tests written), and WAY 17 end to end (spec → `@api @integration` triples with chaining, cleanup, watermark). New `evals.yml` workflow: weekly, on demand, or on the `run-evals` label, needs `ANTHROPIC_API_KEY`. Cases grant no Bash/MCP, so they can't reach a tracker
 - **Capture scrubbing**: `api-responses/` files and `api-exchange` attachments now redact secret-named fields at any depth (password, token, api key, cookie, session, card, cvv, ssn, iban), response `set-cookie`, JWTs, non-placeholder emails and secret query params. Assertions still see real values. The self-test fails on a leak
 - **CLAUDE.md routing table** keeps one trigger per WAY; the full trigger lists live in skill descriptions only (CLAUDE.md 9,473 → 8,702 chars). `validate.py` now fails when a WAY skill has no trigger list, when the table's trigger isn't in it, or when one phrase routes to two skills

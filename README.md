@@ -117,6 +117,9 @@ All tools except Claude are free and open source.
 ```
 devops-qa-agent/
 ├── CLAUDE.md                          # Routing table (17 WAYs → skills, one trigger each) + shared rules + watermark policy
+├── AGENTS.md                          # Same rules for Codex, generated from CLAUDE.md (scripts/codex.py), never edited by hand
+├── .agents/skills → .claude/skills    # Where Codex discovers this repo's skills
+├── codex/config.example.toml          # GitLab MCP server for Codex
 ├── README.md                          # This file
 ├── LICENSE · CONTRIBUTING.md · SECURITY.md · CODE_OF_CONDUCT.md · CHANGELOG.md
 ├── .claude-plugin/                    # plugin.json (manifest, bundled GitLab MCP, install-time settings) + marketplace.json
@@ -125,6 +128,7 @@ devops-qa-agent/
 ├── scripts/
 │   ├── validate.py                    # Frontmatter, names, CLAUDE.md references + size, triggers, plugin manifest, watermarks (CI)
 │   ├── session-context.mjs            # Plugin hook: loads CLAUDE.md rules into each session
+│   ├── codex.py                       # build / check AGENTS.md, install the agent for Codex in a project
 │   └── selftest.mjs                   # Runs test-writer's templates end to end on a demo app (CI)
 ├── evals/                             # `claude plugin eval` cases: routing, readiness gate, WAY 17 end to end (CI: weekly / `run-evals` label)
 ├── .github/                           # CI workflows (validate, evals), issue + PR templates
@@ -208,6 +212,31 @@ cp .claude/settings.example.json .claude/settings.json
 ```
 
 Set `QA_TRACKER` / `QA_CODE_HOST` and your provider's section in `.env` (and, for GitLab, the token in `.mcp.json` and `settings.json`; all are gitignored). Then start Claude Code in the folder and run `qa setup`.
+
+### Option C — Codex (experimental)
+
+The skills follow the open Agent Skills format, so Codex can run the same WAYs. Rules come from a generated `AGENTS.md` instead of `CLAUDE.md`.
+
+```bash
+git clone https://github.com/GhassenAZZOUZ/claude-qa-agent.git ~/qa-agent
+python ~/qa-agent/scripts/codex.py install /path/to/your-app
+```
+
+`install`:
+- links every skill into `~/.agents/skills/` and `~/.codex/skills/`. A folder that's already there and isn't one of these links is left alone
+- adds a `<!-- qa-agent:begin -->…<!-- qa-agent:end -->` block to your app's `AGENTS.md`. The rest of the file is kept, and re-running replaces only that block
+
+For GitLab, merge [`codex/config.example.toml`](codex/config.example.toml) into `~/.codex/config.toml`. Then open Codex in your app and run `qa setup`. Working on this repo itself with Codex needs no install: `AGENTS.md` and `.agents/skills` are already here.
+
+| | Claude Code | Codex |
+|---|---|---|
+| WAYs (skills) | ✅ | ✅ same files |
+| Sub-agents (`test-writer`, `test-execution-agent`, …) | own context | Codex's sub-agent feature if available, else the agent file is followed inline (it shares your context, so large CI logs and diffs cost more) |
+| GitLab MCP | bundled | `config.toml` (example provided) |
+| Plugin install, SessionStart hook, `claude plugin eval` evals | ✅ | ❌ |
+| Generated tests and CI (WAY 10) | ✅ | ✅ (they don't depend on the agent) |
+
+Not yet tried end to end in Codex: please report what works in an issue.
 
 ### Verify
 
