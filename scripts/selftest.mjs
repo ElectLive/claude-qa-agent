@@ -2,7 +2,9 @@
 // compile and run with runner-template/. Run from the repo root:
 //   node scripts/selftest.mjs
 // Builds a throwaway runner in .selftest/ (gitignored), serves a tiny demo app,
-// and runs one UI scenario (+a11y, +visual baseline twice) and one API scenario.
+// and runs one UI scenario (+a11y, +visual baseline twice), one API scenario and one
+// integration workflow (chained values + cleanup) and one E2E API flow (two services,
+// per-service token, async effect polled).
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
@@ -58,10 +60,88 @@ Feature: Self-test API
     And the response time is within the threshold
 `);
 fs.writeFileSync(path.join(tc, 'Test#02.steps.ts'), perTest);
+fs.writeFileSync(path.join(tc, 'Test#03.feature'), `# ${watermark}
+Feature: Self-test integration
+
+  @api @integration @positive
+  Scenario: A created item can be read back and is cleaned up
+    Given the client is authenticated
+    And the request body is:
+      \"\"\"
+      { "name": "widget", "qty": 2 }
+      \"\"\"
+    When the client sends POST "/items"
+    Then the response status is 201
+    And the client stores the response field "id" as "itemId"
+    And the client will delete "/items/{itemId}" after the scenario
+    Given the request body is:
+      \"\"\"
+      { "itemId": "{itemId}" }
+      \"\"\"
+    When the client sends POST "/links"
+    Then the response status is 201
+    And the response field "itemId" equals "{itemId}"
+    When the client sends GET "/items/{itemId}"
+    Then the response status is 200
+    And the response field "name" equals "widget"
+    And the response body has fields:
+      | field | type   |
+      | id    | number |
+      | qty   | number |
+    And the response time is within the threshold
+`);
+fs.writeFileSync(path.join(tc, 'Test#03.steps.ts'), perTest);
+fs.writeFileSync(path.join(tc, 'Test#04.feature'), `# ${watermark}
+Feature: Self-test E2E API
+
+  @api @e2e-api @positive
+  Scenario: An order in one service reserves stock in another
+    Given the client is authenticated
+    And the request body is:
+      \"\"\"
+      { "sku": "SKU-1" }
+      \"\"\"
+    When the client sends POST "orders:/orders"
+    Then the response status is 201
+    And the client stores the response field "id" as "orderId"
+    And the client will delete "orders:/orders/{orderId}" after the scenario
+    And within 5 seconds GET "stock:/reservations?orderId={orderId}" has field "status" equal to "reserved"
+    And the response field "orderId" equals "{orderId}"
+    And within 2 seconds GET "stock:/reservations?orderId=999" returns status 404
+`);
+fs.writeFileSync(path.join(tc, 'Test#04.steps.ts'), perTest);
 
 // 3. Demo app
-fs.writeFileSync(path.join(dir, 'server.cjs'), `require('http').createServer((q, r) => {
+fs.writeFileSync(path.join(dir, 'server.cjs'), `const items = {}; let next = 1;
+const orders = {}, reservations = {}; let nextOrder = 1;
+const json = (r, code, body) => { r.writeHead(code, { 'content-type': 'application/json' }); r.end(body === undefined ? '' : JSON.stringify(body)); };
+require('http').createServer((q, r) => {
   if (q.url === '/health') { r.writeHead(200, { 'content-type': 'application/json' }); return r.end('{"status":"ok"}'); }
+  // "orders" service: needs its own token; reserves stock asynchronously, like a queue consumer would
+  if (q.method === 'POST' && q.url === '/orders') {
+    if (q.headers.authorization !== 'Bearer orders-token') return json(r, 401, { error: 'orders token expected' });
+    const id = nextOrder++; orders[id] = { id, status: 'pending' };
+    setTimeout(() => { reservations[id] = { id: 100 + id, orderId: id, status: 'reserved' }; }, 400);
+    return json(r, 201, orders[id]);
+  }
+  const om = q.url.match(/^\\/orders\\/(\\d+)$/);
+  if (om && q.method === 'DELETE') { delete orders[om[1]]; if (reservations[om[1]]) reservations[om[1]].status = 'released'; return json(r, 204); }
+  // "stock" service
+  if (q.method === 'GET' && q.url.startsWith('/reservations')) {
+    const res = reservations[new URL(q.url, 'http://x').searchParams.get('orderId')];
+    return res ? json(r, 200, res) : json(r, 404, { error: 'not found' });
+  }
+  const m = q.url.match(/^\\/items\\/(\\d+)$/);
+  if (q.method === 'POST' && (q.url === '/items' || q.url === '/links')) {
+    let raw = ''; q.on('data', c => raw += c);
+    return q.on('end', () => {
+      const body = JSON.parse(raw || '{}');
+      if (q.url === '/links') return typeof body.itemId === 'number' && items[body.itemId] ? json(r, 201, body) : json(r, 422, { error: 'unknown item' });
+      const id = next++; items[id] = { id, ...body }; json(r, 201, items[id]);
+    });
+  }
+  if (m && q.method === 'GET') return items[m[1]] ? json(r, 200, items[m[1]]) : json(r, 404, { error: 'not found' });
+  if (m && q.method === 'DELETE') { if (!items[m[1]]) return json(r, 404, { error: 'not found' }); items[m[1]] = null; return json(r, 204); }
   r.writeHead(200, { 'content-type': 'text/html' });
   r.end('<!doctype html><html lang="en"><head><title>Self-test</title></head><body><main><h1>Self-test</h1><button>Submit</button></main></body></html>');
 }).listen(4329);`);
@@ -72,7 +152,8 @@ fs.writeFileSync(cfg, fs.readFileSync(cfg, 'utf8').replace(
 ));
 
 // 4. Run
-const env = { BASE_URL: 'http://localhost:4329', API_BASE_URL: 'http://localhost:4329', API_TEST_TOKEN: 'selftest' };
+const env = { BASE_URL: 'http://localhost:4329', API_BASE_URL: 'http://localhost:4329', API_TEST_TOKEN: 'selftest',
+  ORDERS_BASE_URL: 'http://localhost:4329', ORDERS_TOKEN: 'orders-token', STOCK_BASE_URL: 'http://localhost:4329/' };
 run('npm install --no-audit --no-fund --silent');
 run(`npx playwright install${process.env.CI && process.platform === 'linux' ? ' --with-deps' : ''} chromium`);
 run('npx bddgen');
@@ -83,4 +164,10 @@ const first = JSON.parse(fs.readFileSync(path.join(dir, 'runs/e2e-1/results.json
 if (!JSON.stringify(first).includes("A snapshot doesn't exist")) throw new Error('first visual run should create a baseline');
 run('npx playwright test --project=e2e', { ...env, RUN_ID: 'e2e-2' });
 if (!fs.readdirSync(path.join(dir, 'api-responses')).length) throw new Error('api fixture did not write an exchange file');
-console.log('\n✅ self-test passed: templates compile, UI + a11y + visual + API scenarios run');
+// Integration cleanup ran and the server accepted it (attachment bodies are base64 in the JSON report)
+const cleanup = [];
+const walk = o => o && typeof o === 'object' && (o.name === 'api-cleanup' && o.body ? cleanup.push(Buffer.from(o.body, 'base64').toString()) : Object.values(o).forEach(walk));
+walk(JSON.parse(fs.readFileSync(path.join(dir, 'runs/api/results.json'), 'utf8')));
+if (!cleanup.some(c => c.includes('DELETE /items/1 → 204'))) throw new Error(`integration cleanup did not run: ${JSON.stringify(cleanup)}`);
+if (!cleanup.some(c => c.includes('DELETE http://localhost:4329/orders/1 → 204'))) throw new Error(`E2E API cleanup did not reach the orders service: ${JSON.stringify(cleanup)}`);
+console.log('\n✅ self-test passed: templates compile, UI + a11y + visual + API + integration + E2E API scenarios run');
