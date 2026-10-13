@@ -236,7 +236,7 @@ For GitLab, merge [`codex/config.example.toml`](codex/config.example.toml) into 
 | Plugin install, SessionStart hook, `claude plugin eval` evals | ✅ | ❌ |
 | Generated tests and CI (WAY 10) | ✅ | ✅ (they don't depend on the agent) |
 
-Not yet tried end to end in Codex: please report what works in an issue.
+Not yet tried end to end in Codex. To test a pinned version (`v1.2.0-codex.1`), follow [`codex/TESTING.md`](codex/TESTING.md) and report what works in an issue.
 
 ### Verify
 
