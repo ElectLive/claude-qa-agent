@@ -1,7 +1,7 @@
 # Security Policy
 
 ## Reporting a vulnerability
-Please **don't open a public issue** for security problems. Use GitHub's private vulnerability reporting (**Security → Report a vulnerability** on this repository). We aim to acknowledge reports within 7 days.
+Please **don't open a public issue** for security problems. Use GitHub's private vulnerability reporting (**Security → Report a vulnerability** on this repository). We aim to acknowledge reports within 7 days. On a GitLab-hosted fork, open a **confidential issue** instead.
 
 Examples of what to report:
 - A WAY that can leak a token (into a GitLab issue, a saved report, a script, a log)

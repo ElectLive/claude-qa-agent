@@ -1,0 +1,91 @@
+# GitLab CI for the agent repo itself (mirrors .github/workflows/validate.yml + evals.yml).
+# Not the CI for apps under test: ci-test-setup (WAY 10) writes that one.
+#
+# Behind a corporate network, override these as CI/CD variables (no edit needed):
+#   NODE_IMAGE / PYTHON_IMAGE / PLAYWRIGHT_IMAGE  → your registry mirror
+#   NPM_CONFIG_REGISTRY / PIP_INDEX_URL           → your Artifactory/Nexus
+#   NODE_EXTRA_CA_CERTS (file variable)           → your TLS-inspecting proxy's CA
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never # no duplicate branch pipeline while an MR is open
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+stages: [validate, evals]
+
+variables:
+  NODE_IMAGE: node:22
+  PYTHON_IMAGE: python:3.12-slim
+  # Must match @playwright/test in runner-template/package.json
+  PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.63.0-noble
+  npm_config_cache: $CI_PROJECT_DIR/.npm
+
+.validate:
+  stage: validate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never # schedules run evals only
+    - when: on_success
+
+static:
+  extends: .validate
+  image: $PYTHON_IMAGE
+  script:
+    - pip install --quiet pyyaml
+    - python scripts/validate.py
+
+plugin:
+  extends: .validate
+  image: $NODE_IMAGE
+  cache:
+    key: npm-claude
+    paths: [.npm/]
+  script:
+    - npm install -g @anthropic-ai/claude-code
+    - claude plugin validate .
+    - claude plugin validate .claude-plugin/plugin.json
+
+selftest:
+  extends: .validate
+  image: $PLAYWRIGHT_IMAGE
+  cache:
+    key:
+      files: [runner-template/package.json]
+    paths: [.npm/]
+  script:
+    - node scripts/selftest.mjs
+
+# Runs the WAYs end to end (evals/) with a real model, so it costs tokens: on a schedule
+# (CI/CD → Schedules, e.g. weekly), on a manual "Run pipeline", or on an MR labelled `run-evals`.
+# Adding the label doesn't start a pipeline by itself: run one on the MR afterwards.
+# Needs ANTHROPIC_API_KEY as a masked CI/CD variable.
+evals:
+  stage: evals
+  image: $NODE_IMAGE
+  timeout: 60m
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_MERGE_REQUEST_LABELS =~ /(^|,)run-evals(,|$)/
+  cache:
+    key: npm-claude
+    paths: [.npm/]
+  script:
+    - |
+      if [ -z "$ANTHROPIC_API_KEY" ]; then
+        echo "WARNING: ANTHROPIC_API_KEY CI/CD variable is not set, evals skipped"; exit 0
+      fi
+    - npm install -g @anthropic-ai/claude-code
+    # Write/Edit are granted so WAYs can write test files into the sandboxed workspace (without the
+    # grant, "no tests written" checks pass trivially). No Bash and no MCP tools are granted, and the
+    # GitLab MCP server isn't started (no mock), so a WAY can't reach a real tracker from here.
+    - >-
+      claude plugin eval . --trust-plugin --no-publish --ablation none
+      --runs 1 --threshold 0.8 --max-cost-usd 10 --allow-tools Write Edit
+      --report evals-report.html
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths: [evals-report.html]

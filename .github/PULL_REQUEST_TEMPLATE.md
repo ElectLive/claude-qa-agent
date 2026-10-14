@@ -9,5 +9,5 @@
 
 ## Checklist
 - [ ] No real credentials, internal URLs, company names or personal data in examples
-- [ ] New WAY? Routing row in `CLAUDE.md`, usage + outputs in `README.md`, new labels in `gitlab-filing`
+- [ ] New WAY? Routing row in `CLAUDE.md`, usage + outputs in `README.md`, new labels in `tracker`
 - [ ] Watermark kept in every human-facing template

@@ -125,9 +125,11 @@ devops-qa-agent/
 ├── scripts/
 │   ├── validate.py                    # Frontmatter, names, CLAUDE.md references + size, triggers, plugin manifest, watermarks (CI)
 │   ├── session-context.mjs            # Plugin hook: loads CLAUDE.md rules into each session
+│   ├── retarget-repo.mjs              # Points manifests + README at a fork's URL (e.g. a company GitLab)
 │   └── selftest.mjs                   # Runs test-writer's templates end to end on a demo app (CI)
 ├── evals/                             # `claude plugin eval` cases: routing, readiness gate, WAY 17 end to end (CI: weekly / `run-evals` label)
 ├── .github/                           # CI workflows (validate, evals), issue + PR templates
+├── .gitlab-ci.yml · .gitlab/          # Same CI + issue/MR templates for a GitLab-hosted fork
 ├── .env.example                       # Copy to .env and fill in your values
 ├── .mcp.example.json                  # Copy to .mcp.json (GitLab MCP only)
 ├── .gitignore
@@ -208,6 +210,30 @@ cp .claude/settings.example.json .claude/settings.json
 ```
 
 Set `QA_TRACKER` / `QA_CODE_HOST` and your provider's section in `.env` (and, for GitLab, the token in `.mcp.json` and `settings.json`; all are gitignored). Then start Claude Code in the folder and run `qa setup`.
+
+### Hosting a fork on GitLab
+
+To keep and adapt your own copy on a (self-hosted) GitLab, e.g. for company-specific conventions:
+
+```bash
+# 1. Push the full history to an empty GitLab project
+git clone --mirror https://github.com/GhassenAZZOUZ/claude-qa-agent.git && cd claude-qa-agent.git
+git push --mirror https://gitlab.example.com/qa/claude-qa-agent.git
+
+# 2. In a normal clone: point manifests + README at the fork, then commit
+node scripts/retarget-repo.mjs --repo https://gitlab.example.com/qa/claude-qa-agent \
+  --owner-name "QA Team" --owner-url https://gitlab.example.com/qa --gitlab-url https://gitlab.example.com
+
+# 3. Keep pulling upstream improvements
+git remote add upstream https://github.com/GhassenAZZOUZ/claude-qa-agent.git
+git fetch upstream && git merge upstream/main
+```
+
+- **CI**: `.gitlab-ci.yml` runs the same `static` / `plugin` / `selftest` jobs as GitHub Actions on MRs and the default branch. `evals` runs on a pipeline schedule, a manual pipeline, or an MR labelled `run-evals` (then run a pipeline on it). Set `ANTHROPIC_API_KEY` as a masked CI/CD variable
+- **Corporate network**: override `NODE_IMAGE` / `PYTHON_IMAGE` / `PLAYWRIGHT_IMAGE` with your registry mirror, and set `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, `NODE_EXTRA_CA_CERTS` as CI/CD variables. Developers need the same npm registry + CA locally: the GitLab MCP server is fetched with `npx` at session start
+- **Templates**: `.gitlab/issue_templates/` (Bug, New WAY) and `.gitlab/merge_request_templates/Default.md`
+- **Install from the fork**: `/plugin marketplace add https://gitlab.example.com/qa/claude-qa-agent.git` (a private project needs git credentials that can clone it)
+- **Adding your own conventions**: prefer a new shared skill that the existing skills reference over editing them in place. Upstream merges stay small
 
 ### Verify
 
