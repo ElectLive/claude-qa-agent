@@ -43,9 +43,12 @@ Read every input. Return, and write nothing:
    - Kyverno: each `validate` rule's `message`, `validationFailureAction` (`Enforce` → deny, `Audit` → **no denial, don't write a deny test**), `match`/`exclude`. `mutate` rules → an assert on the mutated field. `generate` → an assert on the generated resource
    - ValidatingAdmissionPolicy: each `validations[].message` (or `messageExpression`: mark `(inferred)`), with the Binding's `validationActions` (`Deny` / `Warn` / `Audit`)
    - Webhooks with no policy source: rule known only from the spec, message `(inferred)`
-   - RBAC: `subject | role | namespace | allowed verbs | denied verbs (from the spec, or every write verb not granted)`
+   - RBAC: `subject | role | namespace | allowed verbs | denied verbs`, rule id `rbac.<role>.<subject>`. Denied = the spec's list plus every write verb (`create`, `update`, `patch`, `delete`, `deletecollection`) the role doesn't grant
    - Status / lifecycle from the spec: conditions and their deadlines, finalizers, owner references, what deletion does
-3. **Spec cross-check**: each requirement (its own IDs if the spec numbers its cases, else AC/R IDs) → the rule(s) that enforce it. Flag both directions: a requirement with no enforcing rule (`no rule found`) and a rule no requirement mentions (`untraced`)
+3. **Spec cross-check**: each requirement → the rule(s) that enforce it. IDs: the spec's own case IDs if it numbers them (used as written, no confirmation step, priority `must` unless the spec says otherwise), else AC/R IDs per `requirements-analysis` §3. Flag three things:
+   - **no rule found**: a requirement nothing enforces
+   - **untraced**: a rule no requirement mentions. Still test it (it's the API's contract) and cite it as `Covers: untraced (<rule id>)`
+   - **conflict**: rules or requirements that can't all hold (a schema allows `size: 100`, a policy denies above 50; "set at creation" but CEL `self == oldSelf` still lets the field be added later). Each conflict becomes a question for the caller; until it's answered, test only what every rule agrees on
 4. **Plan**: one line per `Test#<nn>`: `Test#nn | category | kind | rules | Covers | expected`. Use the categories table. Mark guesses `(inferred)`
 5. **Values needed**: anything a test must reference that already exists in the target cluster (an image URL, a class name, a tenant namespace, a service account). These become `$values` keys, never hard-coded
 
@@ -54,7 +57,7 @@ Read every input. Return, and write nothing:
 | Category | Write one when | Template | Asserts |
 |---|---|---|---|
 | `accept-defaults` | per kind | Test#01 | minimal valid object accepted, every `default` applied, delete removes it |
-| `schema-reject` | per OpenAPI rule (required, type, enum, pattern, bounds, lengths, items) | Test#02 | rejected, error names the field + the rule phrase below |
+| `schema-reject` | per **field**, one step per OpenAPI rule on it (required, type, enum, pattern, bounds, lengths, items) | Test#02 | each step rejected, error names the field + the rule phrase below; a last step accepts the boundary value every rule allows |
 | `cel-rule` | per CEL rule | Test#03 | rejected with the rule's `message`; the boundary that satisfies it is accepted |
 | `immutable` | per `self == oldSelf` field, or one the spec says can't change | Test#04 | update rejected with the message, object unchanged, a mutable field still updates |
 | `admission-deny` | per Enforce/Deny policy rule | Test#05 | rejected with the policy message; the closest allowed object passes |
@@ -68,7 +71,7 @@ API-server phrases for OpenAPI rules (assert the field path **and** the phrase w
 
 | Rule | Phrase |
 |---|---|
-| required | `Required value` |
+| required | `Required value` (a required top-level `spec`: field `spec`) |
 | type | `must be of type` |
 | enum | `Unsupported value` |
 | pattern | `should match` |
@@ -77,6 +80,8 @@ API-server phrases for OpenAPI rules (assert the field path **and** the phrase w
 | minItems / maxItems | `should have at least` / `must have at most` |
 
 CEL and policy rules: assert the `message` verbatim (a stable substring for `messageExpression`).
+
+A key containing `: ` must be double-quoted, or the YAML breaks: `"(contains($error, 'spec: Required value'))": true`. Rules with no behaviour of their own (the `status` subresource, `served` versions) get no test; list them in the map only.
 
 ## Writing rules
 
@@ -87,7 +92,7 @@ CEL and policy rules: assert the `message` verbatim (a stable substring for `mes
 - **Unknown fields** are pruned (or warned), not rejected, by Chainsaw's client. Test pruning with an `assert` that the field is absent, or rejection with a `script` using `kubectl create --validate=strict --dry-run=server`
 - **Warnings** only show on `kubectl`'s stderr: use a `script` (Test#06)
 - **RBAC** uses impersonation: the identity running Chainsaw needs `impersonate` on users/groups/serviceaccounts. Say so in the index
-- **References to existing objects** (`$values.<key>`) are listed in `values.example.yaml`. Never invent a real-looking value. When the spec gives none, write `NOT IMPLEMENTED: <what is needed>` in the test `description`, keep the step, and list it for the caller
+- **Values**: a value that only has to satisfy a format (an `https://` URL, a name) is written inline with `example.com` / `test-` placeholders, like the templates. A value that must name **an object that already exists** in the cluster (an uploaded image, a class, a tenant namespace) is a `$values.<key>`, listed in `values.example.yaml`. Never invent a real-looking one. When the spec gives none, write `NOT IMPLEMENTED: <what is needed>` in the test `description`, keep the step, and list it for the caller
 - **Describe each test** with its IDs first: `description: 'Covers: VAL-03, R-02. <one sentence>'`
 - Header: every file you write starts with `# 🤖 Generated by DevOps QA Agent — review before relying on this test.` on line 1, then the `yaml-language-server` schema comment
 - `metadata.name` is `test-<nn>-<slug>` (lowercase, `-`), the folder is `Test#<nn>-<slug>/`
@@ -501,7 +506,7 @@ spec:
 
 ## Mode `write`
 
-1. Write `.chainsaw.yaml` (template above; set `assert` to the longest status deadline in the plan, `parallel` to 4), then each planned `Test#<nn>-<slug>/chainsaw-test.yaml`, and `values.example.yaml` if any `$values` key is used (keys only, with a comment each, no real values)
+1. Write `.chainsaw.yaml` (template above; `assert` = the longest status deadline in the plan, or `30s` with no `status` test; `parallel: 4`), then each planned `Test#<nn>-<slug>/chainsaw-test.yaml`, and `values.example.yaml` if any `$values` key is used (keys only, with a comment each, no real values)
 2. Write `index.md`:
 
 ```markdown
@@ -518,8 +523,11 @@ spec:
 ## Tests
 | Test# | Category | Kind | Rules | Covers | Expected |
 
+## Open questions
+(conflicts from the cross-check, still to be answered)
+
 ## Not covered
-(Audit-only rules, untraced rules, requirements with no rule, NOT IMPLEMENTED steps)
+(Audit-only rules, requirements with no rule, conflict cases left out, NOT IMPLEMENTED steps)
 
 ## Run
 chainsaw test --test-dir . --config .chainsaw.yaml [--values values.yaml]   # on a disposable or test cluster only

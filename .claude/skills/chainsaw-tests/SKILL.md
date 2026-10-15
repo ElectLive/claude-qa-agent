@@ -24,7 +24,7 @@ Start `chainsaw-test-writer` with `mode: map`, the input paths, the requirements
 
 Show the user, in **one** message:
 - the rule map and planned `Test#<nn>` list (one line each), with `(inferred)` guesses marked
-- the spec cross-check: requirements no rule enforces, and rules no requirement mentions
+- the spec cross-check: requirements no rule enforces, rules no requirement mentions (tested as `untraced`), and **conflicts** (a policy denying what the schema and spec allow, a "set once" field CEL still lets you add later). Each conflict is a question: is the spec or the cluster wrong?
 - the `$values` keys the tests need (existing image URLs, class names, tenant namespaces…)
 - the gate questions, if any
 
