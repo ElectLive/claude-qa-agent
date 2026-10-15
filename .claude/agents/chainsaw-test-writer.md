@@ -91,7 +91,7 @@ A test **covers** a rule when it makes the cluster evaluate that rule and checks
 - status/finalizer/owned objects: an `assert` on the condition's type + status (+ reason), the finalizer, or the owned object, with a timeout
 - RBAC: `can-i` (or a create/patch as the subject) for that verb and subject
 
-Status per rule: `covered` · `weak (<reason>)` · `wrong (<reason>)` · `missing` · `n/a (<reason>)` (e.g. Audit-only policy: there is nothing to deny)
+Status per rule: `covered` · `weak (<reason>)` · `wrong (<reason>)` · `missing` · `n/a (<reason>)`. A rule with nothing to assert (an Audit-only policy has nothing to deny) is `n/a` even when a test wrongly tries to; that test is reported `wrong` under **Existing tests**. Without a spec every rule is `untraced` and the cross-check is skipped
 
 Weak / wrong reasons, also reported per test:
 
@@ -109,12 +109,14 @@ Weak / wrong reasons, also reported per test:
 | `stale` (wrong) | names a field, kind, version or message that no source has any more |
 
 ### 5. Rank the gaps
-- **P1**: deny paths (webhook, policy, CEL), immutability and update rules, delete protection, RBAC denials, `wrong` tests
-- **P2**: controller outcomes (conditions incl. failure reasons, finalizers, owned objects and their cleanup), warnings, `weak` tests on P1 rules
-- **P3**: defaults, boundaries' accept side, type/required/bound rules, other `weak` tests
+- **P1**: deny paths (webhook, policy, CEL), immutability and update rules, delete protection, RBAC denials, and every `wrong` test
+- **P2**: controller outcomes (conditions incl. failure reasons, finalizers, owned objects and their cleanup), warnings
+- **P3**: defaults, boundaries' accept side, type/required/bound rules
+
+A `weak` finding takes its rule's priority (a weak RBAC test is P1).
 
 ### 6. Report
-Write `<out>/gap-report.md` and return its content plus a **plan** for the missing tests (same format as Mode `map`'s plan, numbered `Test#01…`, so Mode `write` can take it):
+Write `<out>/gap-report.md` and return its content. Its **Missing tests** table is the plan Mode `write` takes: one row per missing rule group, plus a `replaces <test>` row for each `wrong` test (a `weak` test gets a one-line fix instead). Status deadlines: from the spec, else the repo's `.chainsaw.yaml` `assert` timeout, else 2m, marked `(inferred)`:
 
 ```markdown
 # Chainsaw gap report — <repo name>
@@ -123,6 +125,8 @@ Write `<out>/gap-report.md` and return its content plus a **plan** for the missi
 ## Summary
 | | Rules | Covered | Weak | Wrong | Missing | n/a |
 (one row per source: CRD, CEL, webhook, policy, RBAC, controller; then a total)
+
+**Existing tests:** <n> sound · <n> weak · <n> wrong
 
 ## Sources
 (found / not found, per row of the discovery table)
@@ -136,7 +140,8 @@ Write `<out>/gap-report.md` and return its content plus a **plan** for the missi
 (each existing test, with its weak/wrong codes and the one-line fix)
 
 ## Missing tests (plan)
-| Test# | Category | Rules | Priority | Expected |
+| Test# | Folder | Category | Kind | Rules | Covers | Priority | Expected |
+(Folder: the name it gets in the repo's layout, e.g. `webhook-delete-protected`; `replaces team-label-audit` in Expected for a wrong test's replacement)
 
 ## Needs input
 (rules whose trigger or message couldn't be resolved, open spec questions)
@@ -183,7 +188,7 @@ A key containing `: ` must be double-quoted, or the YAML breaks: `"(contains($er
 - **One invalid thing per rejected object.** The API server reports schema errors before CEL and admission, so a second fault hides the one under test. Start from the accepted object of Test#01 and break exactly one field
 - **`dryRun: true`** for every accept/reject check that later steps don't need. Nothing is persisted and nothing needs cleanup. Create for real only when a later step reads, patches or deletes the object
 - **Namespaces**: leave namespaced objects in Chainsaw's ephemeral namespace (no `namespace:` field). Cluster-scoped objects get `name: (join('-', ['<base>', $namespace]))` so parallel runs don't collide. A test that needs a pre-existing namespace (tenant RBAC installed by the product) sets `spec.namespace: ($values.<key>)` and says in its description that the namespace isn't created or deleted
-- **No cleanup steps, no sleeps.** Chainsaw deletes what a test created. Waiting is an `assert`/`error` with a `timeout`
+- **No cleanup steps, no sleeps.** Chainsaw deletes what a test created. Waiting is an `assert`/`error` with a `timeout`. Exception: a test that makes an object undeletable (a protection annotation a webhook checks, a finalizer no controller removes) undoes it in a `finally` block, so a failed run doesn't leak it
 - **Unknown fields** are pruned (or warned), not rejected, by Chainsaw's client. Test pruning with an `assert` that the field is absent, or rejection with a `script` using `kubectl create --validate=strict --dry-run=server`
 - **Warnings** only show on `kubectl`'s stderr: use a `script` (Test#06)
 - **RBAC** uses impersonation: the identity running Chainsaw needs `impersonate` on users/groups/serviceaccounts. Say so in the index
@@ -601,7 +606,7 @@ spec:
 
 ## Mode `write`
 
-With `style: existing` (after a gap run), follow the repo's layout instead: its folder naming (`test/chainsaw/<name>/`), inline resources vs `file:` + `resources/`, and its `.chainsaw.yaml` (reuse it, don't write one). Keep the watermark header and put `Test#<nn>` first in each `description`, so the tests still trace to the report.
+With `style: existing` (after a gap run), follow the repo's layout instead: the plan's **Folder** names (`test/chainsaw/<folder>/`), inline resources vs `file:` + `resources/`, and its `.chainsaw.yaml` (reuse it, don't write one). Keep the watermark header and put `Test#<nn>` first in each `description`, so the tests still trace to the report.
 
 1. Write `.chainsaw.yaml` (template above; `assert` = the longest status deadline in the plan, or `30s` with no `status` test; `parallel: 4`), then each planned `Test#<nn>-<slug>/chainsaw-test.yaml`, and `values.example.yaml` if any `$values` key is used (keys only, with a comment each, no real values)
 2. Write `index.md`:

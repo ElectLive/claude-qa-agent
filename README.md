@@ -475,6 +475,14 @@ Reads the CRDs (storage version), policies and RBAC, and builds a **rule map**: 
 
 Values that must already exist in the cluster (image URLs, class names, tenant namespaces) go in `values.example.yaml` as `$values` keys, never invented. If the spec numbers its cases (`VAL-01`, `IMG-07`), tests cite those IDs. Nothing touches a cluster unless you add `run: true` and confirm the context (production contexts are refused). The templates are checked in CI against a real kube-apiserver: each must pass, and fail once the rule it tests is removed (`scripts/chainsaw-selftest.sh`).
 
+**Gaps in an existing suite:**
+```
+chainsaw gaps
+Repo: ./widget-operator          # local path or Git URL
+Existing: ./widget-operator/test/chainsaw/   # optional, discovered otherwise
+```
+Reads the repo's CRDs (or kubebuilder markers), webhooks (`Default`, `ValidateCreate/Update/Delete`: each returned error with its operation and message), controllers (conditions and reasons, finalizers, owned objects), policies and RBAC, each rule with `file:line`, and its existing Chainsaw tests. Every rule gets `covered`, `weak`, `wrong`, `missing` or `n/a`, and every test its findings: `generic-error` (only `$error != null`), `masked` (object breaks two rules), `partial-verbs`, `sleep`, `script-assert`, `shared-state`, `no-catch`, `audit-as-deny`, `stale`. Gaps are ranked P1 (deny paths, immutability, delete protection, RBAC denials, wrong tests) to P3 (defaults, types, bounds) in `gap-report.md`. You pick which to write (`all`, `P1`, a list); they're written in the repo's own folder layout. The repo is never edited. Checked by the `chainsaw-gap-fixture` eval: a fixture operator with planted weak/wrong tests and known missing rules.
+
 ---
 
 ## What the Agent Produces
@@ -525,6 +533,7 @@ Values that must already exist in the cluster (image URLs, class names, tenant n
 - Optional `test-plan` issue and MR/PR comment (`file: true`)
 
 **WAY 18 (Chainsaw tests):**
+- `qa-artifacts/chainsaw/[repo]-gaps-[date]/gap-report.md` — gap mode: coverage per rule, findings per existing test, ranked plan
 - `qa-artifacts/chainsaw/[slug]-[date]/Test#<nn>-<slug>/chainsaw-test.yaml` — one rule per test, plus `.chainsaw.yaml` (timeouts, JUnit report), `index.md` (rule map, spec cross-check, not covered) and `values.example.yaml` when tests reference existing objects
 - Optional `test-plan` issue and MR/PR comment (`file: true`)
 
