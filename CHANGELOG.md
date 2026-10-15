@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Unit tests for `flaky.mjs`** (`scripts/tests/`, `node:test`, no new dependencies): five `results.json` fixtures cover every verdict (`flaky`, `consistent-fail`, `stable-pass`, `insufficient-data`), baseline/network exclusion from flip counts, skipped results, run ordering by start time and the window argument. Runs in the `static` CI job
+
 ## 1.2.0 — 2026-10-15
 
 WAY 17 (API integration & E2E API tests), shared requirements analysis with `R-NN` IDs, boundary tests from OpenAPI schema constraints, evals.

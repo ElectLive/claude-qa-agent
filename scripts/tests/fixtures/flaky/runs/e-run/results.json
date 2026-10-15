@@ -1,0 +1,133 @@
+{
+  "stats": {
+    "startTime": "2026-10-01T08:00:00.000Z"
+  },
+  "suites": [
+    {
+      "title": "checkout",
+      "specs": [],
+      "suites": [
+        {
+          "title": "discount.feature",
+          "specs": [
+            {
+              "title": "Total is stable",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "passed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Expired code is always rejected",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "failed",
+                      "error": {
+                        "message": "expect(locator).toHaveText(expected) failed\n\nExpected: \"€36.00\""
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Discount flips between runs",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e",
+                "quarantine"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "passed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Cart matches visual baseline",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "failed",
+                      "error": {
+                        "message": "A snapshot doesn't exist at /qa/__screenshots__/cart.png, writing actual."
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Survives staging network blips",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "passed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Skipped scenario",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "skipped"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

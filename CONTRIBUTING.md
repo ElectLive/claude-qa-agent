@@ -40,6 +40,7 @@ pip install pyyaml
 python scripts/validate.py      # frontmatter, names, references, plugin rules, watermarks
 claude plugin validate .        # marketplace + plugin manifest (Claude Code CLI)
 node scripts/selftest.mjs       # templates compile + UI/a11y/visual/API scenarios run (needs Node 20+)
+node --test scripts/tests/*.test.mjs   # unit tests for bundled scripts (flaky.mjs)
 ```
 Changed a WAY's instructions? Also run its evals (`evals/`, real model calls, a few cents per routing case, about a dollar or two for an end-to-end case):
 ```bash

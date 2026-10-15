@@ -1,0 +1,136 @@
+{
+  "stats": {
+    "startTime": "2026-10-02T08:00:00.000Z"
+  },
+  "suites": [
+    {
+      "title": "checkout",
+      "specs": [],
+      "suites": [
+        {
+          "title": "discount.feature",
+          "specs": [
+            {
+              "title": "Total is stable",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "passed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Expired code is always rejected",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "failed",
+                      "error": {
+                        "message": "expect(locator).toHaveText(expected) failed\n\nExpected: \"€36.00\""
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Discount flips between runs",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e",
+                "quarantine"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "failed",
+                      "error": {
+                        "message": "expect(locator).toHaveText(expected) failed\n\nExpected: \"€36.00\""
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Cart matches visual baseline",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "passed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Survives staging network blips",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "failed",
+                      "error": {
+                        "message": "page.goto: net::ERR_CONNECTION_REFUSED at https://staging.myapp.com/checkout"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Skipped scenario",
+              "file": ".features-gen/chromium/checkout/discount.feature.spec.js",
+              "tags": [
+                "high",
+                "e2e"
+              ],
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "status": "skipped"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
