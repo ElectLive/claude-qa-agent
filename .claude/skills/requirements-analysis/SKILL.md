@@ -1,6 +1,6 @@
 ---
 name: requirements-analysis
-description: Reference only — the single definition of how requirements are analyzed before tests or stories are written — intake (text, issue, enhanced story, spec) into one requirements model, the readiness gate (Missing Information, vague wording), requirement IDs (AC-NN from stories, R-NN derived from plain text), the scenario categories and tag mapping, and the per-element test checklists. Applied inline by e2e-session, write-tests, integration-tests and traceability; read by test-writer, user-story-enhancer and user-story-format. Not a workflow on its own.
+description: Reference only — the single definition of how requirements are analyzed before tests or stories are written — intake (text, issue, enhanced story, spec) into one requirements model, the readiness gate (Missing Information, vague wording), requirement IDs (AC-NN from stories, R-NN derived from plain text), the scenario categories and tag mapping, and the per-element test checklists. Applied inline by e2e-session, write-tests, integration-tests, chainsaw-tests and traceability; read by test-writer, user-story-enhancer and user-story-format. Not a workflow on its own.
 ---
 
 # requirements-analysis
@@ -16,6 +16,7 @@ When a rule changes, change it here only.
 | **Enhanced story**: a `user-story-format` body with an `## Acceptance Criteria` table | `AC-NN`, as written | its Test Scenarios table | its `## Missing Information` section |
 | **Issue without an AC table** | `R-NN`, derived (§3) | — | derived (§2) |
 | **Plain text** | `R-NN`, derived (§3) | — | derived (§2) |
+| **Test spec with numbered cases** (`VAL-01`, `IMG-07`) | the spec's own IDs, as written (like `AC-NN`: never renumbered) | its cases | derived (§2) |
 | **OpenAPI spec only** | none: operations are the units, tests are `**Covers:** untraced` | the spec's operations | — |
 | **Bug report** (WAY 3 regression test) | none: the one requirement is the bug's expected result, tests are `**Covers:** untraced` | the reproduction steps | `bug-report`'s own checks (it asks when Observe or the expected result is missing) |
 

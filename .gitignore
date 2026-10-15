@@ -19,6 +19,8 @@ node_modules/
 
 # Self-test scratch (scripts/selftest.mjs)
 .selftest/
+.selftest-chainsaw/
+.selftest-chainsaw-bin/
 
 # plugin eval output
 evals/results/

@@ -38,3 +38,14 @@ jobs:
         with:
           node-version: "22"
       - run: node scripts/selftest.mjs
+
+  chainsaw:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.24"
+          cache: false
+      - run: scripts/chainsaw-tools.sh "$RUNNER_TEMP/chainsaw-bin" | tail -1 >> "$GITHUB_PATH"
+      - run: scripts/chainsaw-selftest.sh

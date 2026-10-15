@@ -2,7 +2,8 @@
 # Not the CI for apps under test: ci-test-setup (WAY 10) writes that one.
 #
 # Behind a corporate network, override these as CI/CD variables (no edit needed):
-#   NODE_IMAGE / PYTHON_IMAGE / PLAYWRIGHT_IMAGE  → your registry mirror
+#   NODE_IMAGE / PYTHON_IMAGE / PLAYWRIGHT_IMAGE / GO_IMAGE → your registry mirror
+#   GOPROXY                                       → your Go module proxy (chainsaw job)
 #   NPM_CONFIG_REGISTRY / PIP_INDEX_URL           → your Artifactory/Nexus
 #   NODE_EXTRA_CA_CERTS (file variable)           → your TLS-inspecting proxy's CA
 
@@ -19,6 +20,7 @@ stages: [validate, evals]
 variables:
   NODE_IMAGE: node:22
   PYTHON_IMAGE: python:3.12-slim
+  GO_IMAGE: golang:1.24
   # Must match @playwright/test in runner-template/package.json
   PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.63.0-noble
   npm_config_cache: $CI_PROJECT_DIR/.npm
@@ -57,6 +59,14 @@ selftest:
     paths: [.npm/]
   script:
     - node scripts/selftest.mjs
+
+chainsaw:
+  extends: .validate
+  image: $GO_IMAGE
+  script:
+    - command -v openssl >/dev/null || (apt-get update -qq && apt-get install -y -qq openssl >/dev/null)
+    - export PATH="$(scripts/chainsaw-tools.sh "$CI_PROJECT_DIR/.selftest-chainsaw-bin" | tail -1):$PATH"
+    - scripts/chainsaw-selftest.sh
 
 # Runs the WAYs end to end (evals/) with a real model, so it costs tokens: on a schedule
 # (CI/CD → Schedules, e.g. weekly), on a manual "Run pipeline", or on an MR labelled `run-evals`.

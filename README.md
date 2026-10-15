@@ -6,7 +6,7 @@ An autonomous QA agent for DevOps-oriented teams. Give it an issue (GitLab, GitH
 
 [![validate](https://github.com/GhassenAZZOUZ/claude-qa-agent/actions/workflows/validate.yml/badge.svg)](https://github.com/GhassenAZZOUZ/claude-qa-agent/actions/workflows/validate.yml)
 
-**Quick start:** [Setup](#setup) · **Modes:** [Seventeen Modes](#seventeen-modes) · **See the output:** [examples/](examples/) · **Help wanted:** [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
+**Quick start:** [Setup](#setup) · **Modes:** [Eighteen Modes](#eighteen-modes) · **See the output:** [examples/](examples/) · **Help wanted:** [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
 
 ---
 
@@ -60,7 +60,7 @@ Every generated `.feature`/`.steps.ts` test file starts with the same attributio
 
 ---
 
-## Seventeen Modes
+## Eighteen Modes
 
 Each mode ("WAY") is a skill. Type a trigger phrase, or `/<skill>` directly (`/qa-agent:<skill>` with the plugin). Only the triggered WAY's instructions are loaded.
 
@@ -84,6 +84,7 @@ Each mode ("WAY") is a skill. Type a trigger phrase, or `/<skill>` directly (`/q
 | 15 | `load-test` | `load test` | k6 smoke/load/stress/spike/soak with p95 + error-rate thresholds (never prod) |
 | 16 | `heal-tests` | `heal it` | Repair tests broken by UI renames, with approval |
 | 17 | `integration-tests` | `integration it` / `e2e api it` | One spec → API integration tests; several specs → E2E API tests across services (async effects polled), no run |
+| 18 | `chainsaw-tests` | `chainsaw it` | CRDs + admission policies + RBAC + spec → [Chainsaw](https://kyverno.github.io/chainsaw/) tests for a Kubernetes API (schema, CEL, immutability, deny/warn, RBAC, status), linted, no run |
 
 ### Test levels
 
@@ -93,6 +94,7 @@ Each mode ("WAY") is a skill. Type a trigger phrase, or `/<skill>` directly (`/q
 | API integration | Several endpoints/resources of **one** service | API | 17 | `@api @integration` / `api` |
 | UI E2E | A user journey through the whole app | Browser | 1, 4 | `@e2e` / `e2e` |
 | E2E API | A business flow across **several services** (async effects, per-service auth) | API | 17 (several specs) | `@api @e2e-api` / `api` |
+| Kubernetes API | Custom resources against their CRDs, admission policies, RBAC and controllers | `kubectl` / API server | 18 | Chainsaw `Test` |
 
 The identifiers `e2e` (Playwright project, tag, issue label) and `e2e-session` keep their names for compatibility. They mean **UI E2E**.
 
@@ -107,6 +109,7 @@ The identifiers `e2e` (Playwright project, tag, issue label) and `e2e-session` k
 | [@axe-core/playwright](https://github.com/dequelabs/axe-core-npm) | Accessibility check inside every browser scenario |
 | Your providers' tools | GitLab: bundled [GitLab MCP](https://github.com/zereight/gitlab-mcp). GitHub: [`gh`](https://cli.github.com/). Jira: Atlassian MCP or REST. Azure DevOps: [`az`](https://learn.microsoft.com/cli/azure/) + `azure-devops` extension. Bitbucket: REST |
 | [k6](https://k6.io/) (optional) | Load testing, WAY 15 only |
+| [Chainsaw](https://kyverno.github.io/chainsaw/) (optional) | Kubernetes API tests, WAY 18 only |
 
 All tools except Claude are free and open source.
 
@@ -116,7 +119,7 @@ All tools except Claude are free and open source.
 
 ```
 devops-qa-agent/
-├── CLAUDE.md                          # Routing table (17 WAYs → skills, one trigger each) + shared rules + watermark policy
+├── CLAUDE.md                          # Routing table (18 WAYs → skills, one trigger each) + shared rules + watermark policy
 ├── README.md                          # This file
 ├── LICENSE · CONTRIBUTING.md · SECURITY.md · CODE_OF_CONDUCT.md · CHANGELOG.md
 ├── .claude-plugin/                    # plugin.json (manifest, bundled GitLab MCP, install-time settings) + marketplace.json
@@ -126,7 +129,8 @@ devops-qa-agent/
 │   ├── validate.py                    # Frontmatter, names, CLAUDE.md references + size, triggers, plugin manifest, watermarks (CI)
 │   ├── session-context.mjs            # Plugin hook: loads CLAUDE.md rules into each session
 │   ├── retarget-repo.mjs              # Points manifests + README at a fork's URL (e.g. a company GitLab)
-│   └── selftest.mjs                   # Runs test-writer's templates end to end on a demo app (CI)
+│   ├── selftest.mjs                   # Runs test-writer's templates end to end on a demo app (CI)
+│   └── chainsaw-selftest.sh           # Runs chainsaw-test-writer's templates on a throwaway API server, with mutations (CI)
 ├── evals/                             # `claude plugin eval` cases: routing, readiness gate, WAY 17 end to end (CI: weekly / `run-evals` label)
 ├── .github/                           # CI workflows (validate, evals), issue + PR templates
 ├── .gitlab-ci.yml · .gitlab/          # Same CI + issue/MR templates for a GitLab-hosted fork
@@ -138,19 +142,20 @@ devops-qa-agent/
 ├── .claude/
 │   ├── settings.example.json          # Copy to settings.json and fill in
 │   ├── skills/
-│   │   ├── qa-setup/ e2e-session/ … integration-tests/   # WAY 0–17 skills, one folder each (see "Sixteen Modes")
+│   │   ├── qa-setup/ e2e-session/ … chainsaw-tests/   # WAY 0–18 skills, one folder each (see "Eighteen Modes")
 │   │   ├── flaky-triage/flaky.mjs     # Run-history aggregator used by WAY 13
 │   │   ├── tracker/                   # Shared: provider-neutral issue / MR-PR / CI operations, labels, failures
 │   │   ├── provider-gitlab/ provider-github/ provider-jira/ provider-azure-devops/ provider-bitbucket/
 │   │   ├── bug-report/                # Shared: severity × priority + bug body + when not to file
 │   │   ├── session-report/            # Shared: WAY 1/2 session summary
 │   │   └── user-story-format/         # Shared: the one user-story body format
-│   └── agents/                        # 9 sub-agents (isolated context)
+│   └── agents/                        # 10 sub-agents (isolated context)
 │       ├── test-writer.md                 # Requirements → Test#<nn> Gherkin + playwright-bdd (UI/API/visual)
 │       ├── test-execution-agent.md        # Runs suites, captures artifacts, classifies outcomes
 │       ├── test-healer.md                 # Repairs locator failures from error-context snapshots
 │       ├── mr-test-impact.md              # MR diff → affected tests + uncovered changes
 │       ├── load-test-writer.md            # k6 scripts + smoke run
+│       ├── chainsaw-test-writer.md        # CRDs/policies/RBAC/spec → rule map → Chainsaw tests + lint
 │       ├── ci-diagnostician.md            # Fetches + diagnoses failed pipelines
 │       ├── user-story-enhancer.md         # Scores + rewrites story issues
 │       ├── competitor-benchmark.md        # Sourced competitor benchmark
@@ -162,6 +167,7 @@ devops-qa-agent/
     ├── runs/<RUN_ID>/                 # results.json, junit.xml (CI), artifacts/ (screenshots, traces, error-context)
     ├── api-responses/                 # Every API request/response pair
     ├── load-tests/                    # k6 scripts + summaries
+    ├── chainsaw/                      # WAY 18: <slug>-<date>/Test#<nn>-<slug>/chainsaw-test.yaml + .chainsaw.yaml + index.md
     ├── sessions/ · ci/ · releases/ · traceability/ · benchmarks/
 ```
 
@@ -229,8 +235,8 @@ git remote add upstream https://github.com/GhassenAZZOUZ/claude-qa-agent.git
 git fetch upstream && git merge upstream/main
 ```
 
-- **CI**: `.gitlab-ci.yml` runs the same `static` / `plugin` / `selftest` jobs as GitHub Actions on MRs and the default branch. `evals` runs on a pipeline schedule, a manual pipeline, or an MR labelled `run-evals` (then run a pipeline on it). Set `ANTHROPIC_API_KEY` as a masked CI/CD variable
-- **Corporate network**: override `NODE_IMAGE` / `PYTHON_IMAGE` / `PLAYWRIGHT_IMAGE` with your registry mirror, and set `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, `NODE_EXTRA_CA_CERTS` as CI/CD variables. Developers need the same npm registry + CA locally: the GitLab MCP server is fetched with `npx` at session start
+- **CI**: `.gitlab-ci.yml` runs the same `static` / `plugin` / `selftest` / `chainsaw` jobs as GitHub Actions on MRs and the default branch. `evals` runs on a pipeline schedule, a manual pipeline, or an MR labelled `run-evals` (then run a pipeline on it). Set `ANTHROPIC_API_KEY` as a masked CI/CD variable
+- **Corporate network**: override `NODE_IMAGE` / `PYTHON_IMAGE` / `PLAYWRIGHT_IMAGE` / `GO_IMAGE` with your registry mirror, and set `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, `GOPROXY`, `NODE_EXTRA_CA_CERTS` as CI/CD variables. Developers need the same npm registry + CA locally: the GitLab MCP server is fetched with `npx` at session start
 - **Templates**: `.gitlab/issue_templates/` (Bug, New WAY) and `.gitlab/merge_request_templates/Default.md`
 - **Install from the fork**: `/plugin marketplace add https://gitlab.example.com/qa/claude-qa-agent.git` (a private project needs git credentials that can clone it)
 - **Adding your own conventions**: prefer a new shared skill that the existing skills reference over editing them in place. Upstream merges stay small
@@ -446,6 +452,29 @@ And within 10 seconds GET "stock:/v1/reservations?orderId={orderId}" has field "
 ```
 These are slower and depend on every service being up: run them on a schedule, not on each MR (`--grep-invert @e2e-api`). Queue/DB assertions and contract tests (Pact) are out of scope.
 
+### WAY 18 — Chainsaw Tests for a Kubernetes API
+
+```
+chainsaw it
+CRDs: ./crds/widgets.yaml
+Policies: ./policies/            # Kyverno ClusterPolicy/Policy, ValidatingAdmissionPolicy + bindings
+RBAC: ./rbac/widget-roles.yaml   as: system:serviceaccount:tenant-a:deployer
+Spec: ./docs/widget-test-spec.md
+```
+
+Reads the CRDs (storage version), policies and RBAC, and builds a **rule map**: every OpenAPI rule, CEL rule (`self == oldSelf` = immutable), default, policy rule with its message and action (Deny / Warn / Audit), and allowed/denied verb per subject. It cross-checks it against the spec in both directions (requirements no rule enforces, rules no requirement mentions), shows you the map and the test plan, then writes one [Chainsaw](https://kyverno.github.io/chainsaw/) test per rule and lints it:
+
+| Category | Chainsaw pattern |
+|---|---|
+| Accept + defaults + deletion | `create` → `assert` defaults → `delete` → `error` (gone) |
+| Schema / CEL / cross-reference reject | `create` with `dryRun: true` + `expect: ($error != null)` and `contains($error, '<field> … <phrase or rule message>')`; the boundary that passes is accepted |
+| Immutable field | `patch` rejected with the CEL message, object unchanged, a mutable field still updates |
+| Admission deny / warn | policy message on the error; warnings via `kubectl create --dry-run=server` stderr |
+| RBAC | `kubectl auth can-i <verb> --as=<subject>`: every allowed verb yes, every other write verb no |
+| Status / controller | `assert` the condition within the spec's deadline; `catch` collects describe + events |
+
+Values that must already exist in the cluster (image URLs, class names, tenant namespaces) go in `values.example.yaml` as `$values` keys, never invented. If the spec numbers its cases (`VAL-01`, `IMG-07`), tests cite those IDs. Nothing touches a cluster unless you add `run: true` and confirm the context (production contexts are refused). The templates are checked in CI against a real kube-apiserver: each must pass, and fail once the rule it tests is removed (`scripts/chainsaw-selftest.sh`).
+
 ---
 
 ## What the Agent Produces
@@ -495,6 +524,10 @@ These are slower and depend on every service being up: run them on a schedule, n
 - `qa-artifacts/test-cases/[flow-slug]-e2e-api-[date]/…` — same, for several specs, tagged `@api @e2e-api`
 - Optional `test-plan` issue and MR/PR comment (`file: true`)
 
+**WAY 18 (Chainsaw tests):**
+- `qa-artifacts/chainsaw/[slug]-[date]/Test#<nn>-<slug>/chainsaw-test.yaml` — one rule per test, plus `.chainsaw.yaml` (timeouts, JUnit report), `index.md` (rule map, spec cross-check, not covered) and `values.example.yaml` when tests reference existing objects
+- Optional `test-plan` issue and MR/PR comment (`file: true`)
+
 **WAY 9–16:** verify report + issue comments/labels (9) · `qa-tests/` + CI include in the app repo (10) · MR/PR comment + `sessions/change-*.md` (11) · `releases/<milestone>-<date>.md` (12) · `@quarantine` tags + `flaky-test` issues + `sessions/flaky-*.md` (13) · `traceability/<ref>-<date>.md` (14) · `load-tests/<api>-<date>/` scripts + summaries (15) · healed test files + `sessions/heal-*.md` (16)
 
 ---
@@ -540,7 +573,7 @@ Sev-3 (Medium) / P2 — This sprint
 
 ## Sub-Agents Reference
 
-All 9 sub-agents live in `.claude/agents/`. They are invoked automatically by the orchestrator — you never call them directly. Work that only applies a rubric or template to data the main session already holds is a **skill** instead (see Skills Reference below) — no sub-agent cold start, no isolation needed. Tracker and code-host mechanics live in the shared `tracker` skill and its `provider-*` skills.
+All 10 sub-agents live in `.claude/agents/`. They are invoked automatically by the orchestrator — you never call them directly. Work that only applies a rubric or template to data the main session already holds is a **skill** instead (see Skills Reference below) — no sub-agent cold start, no isolation needed. Tracker and code-host mechanics live in the shared `tracker` skill and its `provider-*` skills.
 
 ---
 
@@ -548,6 +581,13 @@ All 9 sub-agents live in `.claude/agents/`. They are invoked automatically by th
 **Used by:** WAY 1, WAY 2, WAY 3 (regression test), WAY 4, WAY 17 (integration and E2E API workflows)
 
 The single test-authoring agent for the whole project — first analyzes the requirements into happy path / negative / edge / boundary / security / permission scenarios (mandatory input, ID, upload and numeric checks), then writes **both** browser and API scenarios, always as a `Test#<nn>.{md,feature,steps.ts}` triple: Gherkin `.feature` + a real `playwright-bdd` step-definition file (`page` fixture for UI, `request` fixture for API). Every UI scenario that navigates gets a built-in accessibility step (`@axe-core/playwright`, WCAG 2.0 A/AA + best-practice) — there's no separate a11y pass. Every API scenario is tagged `@api` and gets at least 9 mandatory cases per endpoint (happy path, auth failures, missing/invalid fields, IDOR, schema validation, perf threshold; +3 for POST/PUT). Replaces the former `e2e-test-writer`, `api-test-writer`, and `integration-test-writer`.
+
+---
+
+### `chainsaw-test-writer`
+**Used by:** WAY 18
+
+Reads CRDs, Kyverno / ValidatingAdmissionPolicy policies, RBAC and a test spec, and returns a rule map + test plan (`map`), then writes one Chainsaw test per rule and lints it (`write`). Its templates (accept + defaults + deletion, schema reject, CEL rule, immutability, admission deny, admission warn, RBAC, status) are the ones `scripts/chainsaw-selftest.sh` runs in CI. Never applies anything to a cluster.
 
 ---
 
@@ -618,7 +658,7 @@ Builds, saves, and (WAY 1) files the session summary — counts, failed tests, p
 The single story body definition (story, Gherkin ACs, scenarios, Missing Information, DoD), so WAY 6 can re-score WAY 8's stories and `test-writer` can trace tests to stable AC IDs.
 
 ### `requirements-analysis`
-**Used by:** WAY 1, 4, 14, 17 (inline) · `test-writer`, `user-story-enhancer`, `user-story-format`
+**Used by:** WAY 1, 4, 14, 17, 18 (inline) · `test-writer`, `user-story-enhancer`, `user-story-format`
 
 The single set of rules for analyzing requirements, so stories are scored against the same checks their tests are written from:
 1. **Intake**: text, issue, enhanced story or spec → one requirements model (requirements, actors, data elements, NFRs, open questions)
@@ -637,7 +677,7 @@ The single set of rules for analyzing requirements, so stories are scored agains
 5. **Checklists per element**: input field, ID/resource, upload, numeric, auth/session, concurrency, backend failure
 
 ### WAY skills
-The 17 WAY skills hold each mode's full procedure; see **Seventeen Modes** above.
+The 18 WAY skills hold each mode's full procedure; see **Eighteen Modes** above.
 
 ---
 

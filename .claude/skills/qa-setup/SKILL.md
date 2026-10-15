@@ -11,6 +11,7 @@ Run once per project. Ask before changing anything that already exists.
 - If `qa-artifacts/playwright.config.ts` is missing, copy `${CLAUDE_PLUGIN_ROOT}/runner-template/` (`package.json`, `playwright.config.ts`, `README.md`) into it
 - If a config already exists, compare it with the **Playwright config contract** in `test-execution-agent` and list the differences. Don't overwrite it
 - From `qa-artifacts/`: `npm install`, then `npx playwright install chromium`. Report `npx playwright --version`
+- Optional, report only: `k6 version` (WAY 15), `chainsaw version` and `kubectl config current-context` (WAY 18). Missing ones don't block setup
 
 ## 2. Providers
 Ask, or detect from `git remote -v` and the connected MCP servers, then confirm:

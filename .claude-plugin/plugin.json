@@ -2,7 +2,7 @@
   "name": "qa-agent",
   "displayName": "DevOps QA Agent",
   "version": "1.1.1",
-  "description": "QA workflows for Claude Code on any provider (GitLab, GitHub, Jira, Azure DevOps, Bitbucket): Playwright-BDD UI E2E, API & API integration tests with accessibility checks, bug filing, fix verification, MR/PR test impact, flaky triage, test healing, traceability, release readiness, load tests, CI setup.",
+  "description": "QA workflows for Claude Code on any provider (GitLab, GitHub, Jira, Azure DevOps, Bitbucket): Playwright-BDD UI E2E, API & API integration tests with accessibility checks, bug filing, fix verification, MR/PR test impact, flaky triage, test healing, traceability, release readiness, load tests, Chainsaw tests for Kubernetes CRDs, CI setup.",
   "author": {
     "name": "Ghassen Azzouz",
     "url": "https://github.com/GhassenAZZOUZ"
@@ -14,11 +14,13 @@
     "accessibility",
     "azure-devops",
     "bitbucket",
+    "chainsaw",
     "devops",
     "gherkin",
     "github",
     "gitlab",
     "jira",
+    "kubernetes",
     "playwright",
     "playwright-bdd",
     "qa",
@@ -30,6 +32,7 @@
   ],
   "agents": [
     "./.claude/agents/benchmark-gap-story-writer.md",
+    "./.claude/agents/chainsaw-test-writer.md",
     "./.claude/agents/ci-diagnostician.md",
     "./.claude/agents/competitor-benchmark.md",
     "./.claude/agents/load-test-writer.md",

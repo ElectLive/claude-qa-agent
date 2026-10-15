@@ -17,7 +17,7 @@ Thanks for helping QA engineers everywhere test faster. This project is a set of
 - ★ The skill folder name / agent file name equals `name`
 - ★ Every skill or agent listed in `CLAUDE.md` exists
 - ★ Human-facing output templates end with the Output Watermark footer, and generated test files start with the watermark header (see `CLAUDE.md` → Output Watermark). This is a fixed policy, so don't remove it
-- ★ The step templates in `.claude/agents/test-writer.md` compile and run (`scripts/selftest.mjs`)
+- ★ The step templates in `.claude/agents/test-writer.md` compile and run (`scripts/selftest.mjs`), and the Chainsaw templates in `.claude/agents/chainsaw-test-writer.md` pass on the fixture and fail without their rule (`scripts/chainsaw-selftest.sh`)
 - ★ **Plugin-safe.** The repo root is also the `qa-agent` plugin:
   - a new agent file must be added to the `agents` list in `.claude-plugin/plugin.json`
   - refer to files inside this repo as `${CLAUDE_PLUGIN_ROOT}/…`, never as a relative path
@@ -40,6 +40,7 @@ pip install pyyaml
 python scripts/validate.py      # frontmatter, names, references, plugin rules, watermarks
 claude plugin validate .        # marketplace + plugin manifest (Claude Code CLI)
 node scripts/selftest.mjs       # templates compile + UI/a11y/visual/API scenarios run (needs Node 20+)
+scripts/chainsaw-selftest.sh    # chainsaw-test-writer templates on a throwaway API server (needs chainsaw, setup-envtest, openssl)
 ```
 Changed a WAY's instructions? Also run its evals (`evals/`, real model calls, a few cents per routing case, about a dollar or two for an end-to-end case):
 ```bash
