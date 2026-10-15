@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0 — 2026-10-15
+
+WAY 17 (API integration & E2E API tests), shared requirements analysis with `R-NN` IDs, boundary tests from OpenAPI schema constraints, evals.
+
 - **Boundaries from the OpenAPI spec**: `requirements-analysis` §5 gains an OpenAPI schema-constraints table (`minLength`/`maxLength`, `minimum`/`maximum` incl. exclusive, `minItems`/`maxItems`, `pattern`, `enum`, `format`, `required` as absent / `null` / empty, non-nullable, `type`, `default`, `additionalProperties`). Spec-only API tests now get one `@boundary` Outline per constrained property (test-writer mandatory case 10); rejected rows assert their 4xx, never 5xx. Input and numeric checklists now cover the lower bound too (min - 1, min). New eval `api-spec-boundaries`
 - **Evals** (`evals/`, `claude plugin eval`): routing cases (one per hard-to-route WAY, plus "no WAY"), the readiness gate (plain text → R-NN + questions, no tests written), and WAY 17 end to end (spec → `@api @integration` triples with chaining, cleanup, watermark). New `evals.yml` workflow: weekly, on demand, or on the `run-evals` label, needs `ANTHROPIC_API_KEY`. Cases grant no Bash/MCP, so they can't reach a tracker
 - **Capture scrubbing**: `api-responses/` files and `api-exchange` attachments now redact secret-named fields at any depth (password, token, api key, cookie, session, card, cvv, ssn, iban), response `set-cookie`, JWTs, non-placeholder emails and secret query params. Assertions still see real values. The self-test fails on a leak
