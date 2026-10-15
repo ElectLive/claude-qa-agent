@@ -16,14 +16,14 @@ When a rule changes, change it here only.
 | **Enhanced story**: a `user-story-format` body with an `## Acceptance Criteria` table | `AC-NN`, as written | its Test Scenarios table | its `## Missing Information` section |
 | **Issue without an AC table** | `R-NN`, derived (§3) | — | derived (§2) |
 | **Plain text** | `R-NN`, derived (§3) | — | derived (§2) |
-| **OpenAPI spec only** | none: operations are the units, tests are `**Covers:** untraced` | the spec's operations | — |
+| **OpenAPI spec only** | none: operations are the units, tests are `**Covers:** untraced` | the spec's operations; each request property and parameter is an element whose schema keywords are its stated limits (§5, OpenAPI schema constraints) | — |
 | **Bug report** (WAY 3 regression test) | none: the one requirement is the bug's expected result, tests are `**Covers:** untraced` | the reproduction steps | `bug-report`'s own checks (it asks when Observe or the expected result is missing) |
 
 A spec given **with** a story or text adds API context. The IDs still come from the story or text.
 
 Extract, whatever the source:
 - **Actors / roles** (guest, user, admin, another user…)
-- **Data elements**: input fields, ID-based resources, file uploads, numeric fields, auth/session
+- **Data elements**: input fields, ID-based resources, file uploads, numeric fields, auth/session. From a spec: every request-body property, path, query and header parameter, with its schema keywords (`minLength`, `maximum`, `enum`, `pattern`, `required`…) as `limits`
 - **Non-functional statements** with numbers (latency, size limits, browsers). Without a number, a statement goes to §2
 - **Constraints** (business rules, limits, formats)
 
@@ -94,7 +94,7 @@ One list, used by test-writer's scenarios **and** the story's Test Scenarios tab
 | `happy_path` | the primary success flow | `@positive` | every requirement |
 | `negative` | invalid input or a forbidden action, with the rejection asserted | `@negative` | every requirement that takes input or an action |
 | `edge_case` | valid but extreme input or state | `@edge-case` | when §5 lists one for an element involved |
-| `boundary` | at and just beyond a stated limit | `@boundary` (often an Outline) | every stated limit |
+| `boundary` | at and just beyond a stated limit, on **both** sides (min and max) | `@boundary` (often an Outline) | every stated limit, including each spec schema keyword in §5 |
 | `security` | injection, XSS, IDOR, auth bypass, data exposure | `@security @negative` | any input field, ID-based resource, or authenticated action |
 | `permissions` | each actor/role gets exactly its access | `@auth` (`@negative` for the denials) | more than one actor, or a resource with an owner |
 | `performance` | a stated latency or load target | `@performance` | only when a non-functional statement gives a number |
@@ -107,10 +107,31 @@ For every element in the model, cover each applicable line. Each is a scenario (
 
 | Element | Cover |
 |---|---|
-| **Input field** | empty · whitespace only · max length · max length + 1 · special characters / unicode · unexpected format · SQL injection · XSS payload |
+| **Input field** | empty · whitespace only · min length - 1 · min length (when a minimum is stated) · max length · max length + 1 · special characters / unicode · unexpected format · SQL injection · XSS payload |
 | **ID-based resource** | valid · invalid format · non-existent · another user's (IDOR) · deleted |
 | **File upload** | valid · empty file · oversized · wrong MIME type · malicious filename |
-| **Numeric field** | 0 · -1 · max · max + 1 · decimal where an integer is expected · non-numeric |
+| **Numeric field** | min - 1 · min (0 and -1 when no minimum is stated) · max · max + 1 · decimal where an integer is expected · non-numeric |
 | **Auth / session** | guest · expired session or token mid-flow · insufficient role |
 | **Concurrency**: only when two actors or tabs can change the same resource | double submit · simultaneous edit (last write, or a conflict error, as specified) |
 | **Failure of a backend call**: only for actions that call one (submit, pay, save) | a failed or slow response shows an error and doesn't hang · retrying creates no duplicate |
+
+### OpenAPI schema constraints
+
+For a spec, each request property and parameter is an element, and each keyword it carries is a stated limit. One `@boundary` Scenario Outline per property, with an `expected status` column: values inside the limit → the documented 2xx, values outside → 4xx (400 or 422, as documented), **never 5xx**.
+
+| Keyword | Rows |
+|---|---|
+| `minLength` / `maxLength` | min - 1 · min · max · max + 1 characters (no min - 1 when min is 0) |
+| `minimum` / `maximum` | min - 1 step · min · max · max + 1 step (step = 1 for `integer`, `multipleOf` or 0.01 for `number`) |
+| `exclusiveMinimum` / `exclusiveMaximum` | the bound itself (rejected) · one step inside (accepted). OAS 3.0 sets it as a boolean on `minimum`/`maximum`, 3.1 as the bound's value |
+| `minItems` / `maxItems` | min - 1 · min · max · max + 1 items |
+| `pattern` | one matching value · one value that is valid in every way except the pattern |
+| `enum` | every allowed value (one row each) · one value outside the set · a case variant of an allowed value |
+| `format` (`email`, `date`, `date-time`, `uuid`, `uri`) | one valid value · one malformed value |
+| `required` | absent · `null` · empty (`""`, `[]` or `{}`, by type): three separate rows, because APIs often treat them differently |
+| not `nullable` (no `null` in `type`) | `null` → 4xx |
+| `type` | one value of the wrong type |
+| `default` | property absent → the default applies (assert it on the response or a read) |
+| `additionalProperties: false` | one unknown property → 4xx |
+
+Put JSON literals in the Examples column (`"AB"`, `91`, `null`) and the placeholder unquoted in the body (`{ "code": <code> }`), so `null` and numbers keep their type. The `required` "absent" row is its own Scenario, since an Outline row can't drop a key. Change only the property under test per row: every other property stays at a valid value.

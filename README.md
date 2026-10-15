@@ -126,7 +126,7 @@ devops-qa-agent/
 │   ├── validate.py                    # Frontmatter, names, CLAUDE.md references + size, triggers, plugin manifest, watermarks (CI)
 │   ├── session-context.mjs            # Plugin hook: loads CLAUDE.md rules into each session
 │   └── selftest.mjs                   # Runs test-writer's templates end to end on a demo app (CI)
-├── evals/                             # `claude plugin eval` cases: routing, readiness gate, WAY 17 end to end (CI: weekly / `run-evals` label)
+├── evals/                             # `claude plugin eval` cases: routing, readiness gate, spec boundaries, WAY 17 end to end (CI: weekly / `run-evals` label)
 ├── .github/                           # CI workflows (validate, evals), issue + PR templates
 ├── .env.example                       # Copy to .env and fill in your values
 ├── .mcp.example.json                  # Copy to .mcp.json (GitLab MCP only)
@@ -521,7 +521,7 @@ All 9 sub-agents live in `.claude/agents/`. They are invoked automatically by th
 ### `test-writer`
 **Used by:** WAY 1, WAY 2, WAY 3 (regression test), WAY 4, WAY 17 (integration and E2E API workflows)
 
-The single test-authoring agent for the whole project — first analyzes the requirements into happy path / negative / edge / boundary / security / permission scenarios (mandatory input, ID, upload and numeric checks), then writes **both** browser and API scenarios, always as a `Test#<nn>.{md,feature,steps.ts}` triple: Gherkin `.feature` + a real `playwright-bdd` step-definition file (`page` fixture for UI, `request` fixture for API). Every UI scenario that navigates gets a built-in accessibility step (`@axe-core/playwright`, WCAG 2.0 A/AA + best-practice) — there's no separate a11y pass. Every API scenario is tagged `@api` and gets at least 9 mandatory cases per endpoint (happy path, auth failures, missing/invalid fields, IDOR, schema validation, perf threshold; +3 for POST/PUT). Replaces the former `e2e-test-writer`, `api-test-writer`, and `integration-test-writer`.
+The single test-authoring agent for the whole project — first analyzes the requirements into happy path / negative / edge / boundary / security / permission scenarios (mandatory input, ID, upload and numeric checks), then writes **both** browser and API scenarios, always as a `Test#<nn>.{md,feature,steps.ts}` triple: Gherkin `.feature` + a real `playwright-bdd` step-definition file (`page` fixture for UI, `request` fixture for API). Every UI scenario that navigates gets a built-in accessibility step (`@axe-core/playwright`, WCAG 2.0 A/AA + best-practice) — there's no separate a11y pass. Every API scenario is tagged `@api` and gets at least 10 mandatory cases per endpoint (happy path, auth failures, missing/invalid fields, IDOR, schema validation, perf threshold, and boundary Outlines built from the spec's schema constraints; +3 for POST/PUT). Replaces the former `e2e-test-writer`, `api-test-writer`, and `integration-test-writer`.
 
 ---
 

@@ -142,6 +142,7 @@ Each requirement (AC or R) → at least one Scenario. Categories and their tags 
 7. Another user's resource ID (IDOR) → 403
 8. Response schema validation (required fields present, correct types)
 9. Response time check (flag if > 2s, or the value from `API_PERF_THRESHOLD_MS`)
+10. Schema constraint boundaries: one `@boundary` Scenario Outline per request property or parameter that carries a schema keyword, with the rows from `requirements-analysis` §5 (OpenAPI schema constraints). A rejected row asserts its 4xx status, never just "not 2xx"
 
 For POST/PUT, add: duplicate creation → 409 (if applicable), payload at max allowed size, payload exceeding max size → 413/400.
 

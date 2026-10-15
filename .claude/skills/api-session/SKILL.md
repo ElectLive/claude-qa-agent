@@ -13,7 +13,7 @@ If you only have a base URL and no spec, ask: "Do you have an OpenAPI spec URL o
 
 ## Phase 1: Write tests
 1. Fetch the spec (WebFetch) or read the file
-2. Run `test-writer` (`api` type). It covers every endpoint with the 9 mandatory cases (+3 for POST/PUT), using the shared `steps/api.steps.ts` and the `api` fixture
+2. Run `test-writer` (`api` type). It covers every endpoint with the mandatory cases (+3 for POST/PUT), including a `@boundary` Outline for each request property's schema constraints (`minLength`, `maximum`, `enum`, `pattern`, `required`…), using the shared `steps/api.steps.ts` and the `api` fixture
 3. Output: `Test#<nn>` triples under `./qa-artifacts/test-cases/[api-slug]-[YYYY-MM-DD]/`
 
 ## Phase 2: Execute
