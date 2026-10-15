@@ -113,6 +113,30 @@ Feature: Self-test E2E API
     And within 2 seconds GET "stock:/reservations?orderId=999" returns status 404
 `);
 fs.writeFileSync(path.join(tc, 'Test#04.steps.ts'), perTest);
+// Schema-constraint boundaries (requirements-analysis §5): JSON literals in Examples keep null and numbers typed
+fs.writeFileSync(path.join(tc, 'Test#05.feature'), `# ${watermark}
+Feature: Self-test boundaries
+
+  @api @boundary
+  Scenario Outline: Coupon code length <code> gives <status>
+    Given the client is authenticated
+    And the request body is:
+      \"\"\"
+      { "code": <code>, "percent": 10 }
+      \"\"\"
+    When the client sends POST "/coupons"
+    Then the response status is <status>
+
+    Examples:
+      | code                    | status |
+      | "AB"                    | 422    |
+      | "ABC"                   | 201    |
+      | "ABCDEFGHIJKLMNOPQRST"  | 201    |
+      | "ABCDEFGHIJKLMNOPQRSTU" | 422    |
+      | null                    | 422    |
+      | 123                     | 422    |
+`);
+fs.writeFileSync(path.join(tc, 'Test#05.steps.ts'), perTest);
 
 // 3. Demo app
 fs.writeFileSync(path.join(dir, 'server.cjs'), `const items = {}; let next = 1;
@@ -135,6 +159,14 @@ require('http').createServer((q, r) => {
     return res ? json(r, 200, res) : json(r, 404, { error: 'not found' });
   }
   const m = q.url.match(/^\\/items\\/(\\d+)$/);
+  // "coupons": code must be a 3-20 char string (boundary self-test)
+  if (q.method === 'POST' && q.url === '/coupons') {
+    let raw = ''; q.on('data', c => raw += c);
+    return q.on('end', () => {
+      const { code } = JSON.parse(raw || '{}');
+      return typeof code === 'string' && code.length >= 3 && code.length <= 20 ? json(r, 201, { code }) : json(r, 422, { error: 'code must be 3-20 chars' });
+    });
+  }
   if (q.method === 'POST' && (q.url === '/items' || q.url === '/links')) {
     let raw = ''; q.on('data', c => raw += c);
     return q.on('end', () => {
@@ -161,6 +193,12 @@ run('npm install --no-audit --no-fund --silent');
 run(`npx playwright install${process.env.CI && process.platform === 'linux' ? ' --with-deps' : ''} chromium`);
 run('npx bddgen');
 run('npx playwright test --project=api', { ...env, RUN_ID: 'api' });
+// Every boundary row ran as its own test (6 Examples rows) and passed
+const apiStats = JSON.parse(fs.readFileSync(path.join(dir, 'runs/api/results.json'), 'utf8'));
+const boundaryRows = [];
+const rows = o => o && typeof o === 'object' && (typeof o.title === 'string' && o.title.startsWith('Coupon code length') && o.tests ? boundaryRows.push(o) : Object.values(o).forEach(rows));
+rows(apiStats);
+if (boundaryRows.length !== 6) throw new Error(`expected 6 boundary rows, found ${boundaryRows.length}`);
 // First visual run must fail with "snapshot doesn't exist" (baseline created); the second must pass
 try { run('npx playwright test --project=e2e', { ...env, RUN_ID: 'e2e-1' }); } catch { /* expected */ }
 const first = JSON.parse(fs.readFileSync(path.join(dir, 'runs/e2e-1/results.json'), 'utf8'));
@@ -182,4 +220,4 @@ const walk = o => o && typeof o === 'object' && (o.name === 'api-cleanup' && o.b
 walk(JSON.parse(fs.readFileSync(path.join(dir, 'runs/api/results.json'), 'utf8')));
 if (!cleanup.some(c => c.includes('DELETE /items/1 → 204'))) throw new Error(`integration cleanup did not run: ${JSON.stringify(cleanup)}`);
 if (!cleanup.some(c => c.includes('DELETE http://localhost:4329/orders/1 → 204'))) throw new Error(`E2E API cleanup did not reach the orders service: ${JSON.stringify(cleanup)}`);
-console.log('\n✅ self-test passed: templates compile, UI + a11y + visual + API + integration + E2E API scenarios run');
+console.log('\n✅ self-test passed: templates compile, UI + a11y + visual + API + boundary Outline + integration + E2E API scenarios run');
