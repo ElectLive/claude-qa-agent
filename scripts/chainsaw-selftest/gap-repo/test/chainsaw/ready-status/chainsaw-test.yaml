@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ready-status
+spec:
+  namespace: widgets-e2e
+  steps:
+    - try:
+        - create:
+            resource:
+              apiVersion: qa.example.com/v1alpha1
+              kind: Widget
+              metadata:
+                name: ready
+              spec:
+                size: 1
+                image: https://images.example.com/os.qcow2
+        - script:
+            content: |
+              sleep 20
+              kubectl get widget ready -n widgets-e2e -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' | grep -q True
+            check:
+              ($error == null): true

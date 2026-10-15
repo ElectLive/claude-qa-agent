@@ -1,0 +1,78 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: widget-size-cap
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - qa.example.com
+      apiVersions:
+      - '*'
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - widgets
+  validations:
+  - expression: object.spec.size <= 50
+    message: size above 50 needs a capacity review
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: widget-size-cap
+spec:
+  policyName: widget-size-cap
+  validationActions:
+  - Deny
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: widget-bronze-deprecated
+spec:
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - qa.example.com
+      apiVersions:
+      - '*'
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - widgets
+  validations:
+  - expression: object.spec.tier != 'bronze'
+    message: tier bronze is deprecated, use silver
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: widget-bronze-deprecated
+spec:
+  policyName: widget-bronze-deprecated
+  validationActions:
+  - Warn
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-team-label
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: team-label
+      match:
+        any:
+          - resources:
+              kinds: [qa.example.com/v1alpha1/Widget]
+      validate:
+        message: widgets should carry a team label
+        pattern:
+          metadata:
+            labels:
+              team: "?*"

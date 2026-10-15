@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: cel-maxreplicas
+spec:
+  steps:
+    - try:
+        - create:
+            resource:
+              apiVersion: qa.example.com/v1alpha1
+              kind: Widget
+              metadata:
+                name: low-max
+              spec:
+                size: 5
+                maxReplicas: 1
+                image: https://images.example.com/os.qcow2
+            expect:
+              - check:
+                  ($error != null): true

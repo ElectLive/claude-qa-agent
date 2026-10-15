@@ -1,0 +1,18 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: widget-viewer
+rules:
+  - apiGroups: [qa.example.com]
+    resources: [widgets]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: widget-editor
+rules:
+  - apiGroups: [qa.example.com]
+    resources: [widgets]
+    verbs: [get, list, watch, create, update, patch]

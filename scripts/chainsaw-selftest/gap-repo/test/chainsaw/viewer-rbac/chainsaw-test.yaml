@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: viewer-rbac
+spec:
+  steps:
+    - try:
+        - create:
+            resource:
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: viewer
+        - create:
+            resource:
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: RoleBinding
+              metadata:
+                name: viewer
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: widget-viewer
+              subjects:
+                - kind: ServiceAccount
+                  name: viewer
+                  namespace: ($namespace)
+        - script:
+            env:
+              - name: NAMESPACE
+                value: ($namespace)
+            content: kubectl auth can-i get widgets.qa.example.com -n "$NAMESPACE" --as="system:serviceaccount:$NAMESPACE:viewer"
+            check:
+              ($error == null): true

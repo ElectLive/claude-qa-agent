@@ -1,0 +1,7 @@
+apiVersion: qa.example.com/v1alpha1
+kind: Widget
+metadata:
+  name: http-image
+spec:
+  size: 2
+  image: http://images.example.com/os.qcow2
