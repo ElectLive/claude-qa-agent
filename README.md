@@ -85,7 +85,7 @@ Each mode ("WAY") is a skill. Type a trigger phrase, or `/<skill>` directly (`/q
 | 15 | `load-test` | `load test` | k6 smoke/load/stress/spike/soak with p95 + error-rate thresholds (never prod) |
 | 16 | `heal-tests` | `heal it` | Repair tests broken by UI renames, with approval |
 | 17 | `integration-tests` | `integration it` / `e2e api it` | One spec → API integration tests; several specs → E2E API tests across services (async effects polled), no run |
-| 18 | `explore-session` | `explore it` | Charter → live browser exploration → anomalies confirmed by a regression test → bugs (with approval) + untested flows |
+| 18 | `explore-session` | `explore it` | Charter → live browser exploration → `test-writer` turns flows + anomalies into bdd tests → run now or later → bugs (with approval) |
 
 ### Test levels
 
@@ -129,7 +129,7 @@ devops-qa-agent/
 │   ├── validate.py                    # Frontmatter, names, CLAUDE.md references + size, triggers, plugin manifest, watermarks (CI)
 │   ├── session-context.mjs            # Plugin hook: loads CLAUDE.md rules into each session
 │   └── selftest.mjs                   # Runs test-writer's templates end to end on a demo app (CI)
-├── evals/                             # `claude plugin eval` cases: routing, readiness gate, spec boundaries, WAY 17 end to end (CI: weekly / `run-evals` label)
+├── evals/                             # `claude plugin eval` cases: routing, readiness gate, spec boundaries, WAY 17 and WAY 18 handoff end to end (CI: weekly / `run-evals` label)
 ├── .github/                           # CI workflows (validate, evals), issue + PR templates
 ├── .env.example                       # Copy to .env and fill in your values
 ├── .mcp.example.json                  # Copy to .mcp.json (GitLab MCP only)
@@ -430,11 +430,20 @@ explore it checkout as a guest: pricing, discount codes, validation --env stagin
 budget: 200
 ```
 
-No requirements needed. `exploratory-tester` drives a real headless browser through a Playwright MCP server that only it can use, works the charter with test heuristics (boundary inputs, double submit, back/refresh mid-flow, deep links with other IDs, mobile width), and checks oracles after every action: console errors, 4xx/5xx, broken links, raw `undefined`/`NaN`/stack traces, nameless buttons and unlabeled fields in the accessibility snapshot. It returns the pages and flows it found plus each anomaly (`A-NN`) with exact steps and evidence.
+No requirements needed. `exploratory-tester` drives a real headless browser through a Playwright MCP server that only it can use, works the charter with test heuristics (boundary inputs, double submit, back/refresh mid-flow, deep links with other IDs, mobile width), and checks oracles after every action: console errors, 4xx/5xx, broken links, raw `undefined`/`NaN`/stack traces, nameless buttons and unlabeled fields in the accessibility snapshot.
 
-Nothing is filed from a live hunch. You pick the anomalies to confirm; each one becomes a `@regression @exploratory` test that asserts the expected behavior and is run with `npx playwright test`. Only the ones that fail are bugs; they're filed with your OK and land in `regression/bug-<ref>/`, so `verify it <ref>` works later. Flows no existing test covers are listed, and `write it` can turn them into tests (through the usual readiness gate).
+What it learns is a **handoff to `test-writer`**: each flow with its preconditions, steps (role + accessible name), test data and checkpoints to assert, the validation messages it saw, and each anomaly (`A-NN`) with observed vs expected. You confirm the derived `R-NN` table (these describe what the app does *today*, so you say what's intended) and pick the anomalies. `test-writer` then writes ordinary `playwright-bdd` tests:
+- **Flow tests** (`@e2e @exploratory`, `Covers: R-NN`): pin today's confirmed behavior, so they pass now and catch regressions later
+- **Anomaly tests** (`@regression @exploratory`): assert the expected behavior, so they fail while the anomaly exists
 
-Safe by default: no deletes, payments, emails or account changes unless you say `allow: delete, payment`; `--env prod` is read-only and needs your confirmation; signed-in exploration uses `UI_TEST_USER` / `UI_TEST_PASSWORD` from `.env` (a test account).
+Nothing runs unless you ask. Run them now, or later:
+```
+explore it run explore-2026-10-16-14-30     # run, confirm anomalies, offer to file bugs
+npx bddgen && BASE_URL=https://staging.myapp.com npx playwright test --project=e2e test-cases/explore-checkout-2026-10-16/   # by hand
+```
+or ship them with the rest of the suite via `ci setup`. Only an anomaly whose test fails is a bug; it's filed with your OK and its folder becomes `regression/bug-<ref>/`, so `verify it <ref>` works later. `trace it <flow folder>` traces the `R-NN`s like any other.
+
+Safe by default: no deletes, payments, emails or account changes unless you say `allow: delete, payment`; `--env prod` is read-only and needs your confirmation; signed-in exploration and tests use `UI_TEST_USER` / `UI_TEST_PASSWORD` from `.env` (a test account).
 
 ---
 
@@ -486,10 +495,11 @@ Safe by default: no deletes, payments, emails or account changes unless you say 
 - Optional `test-plan` issue and MR/PR comment (`file: true`)
 
 **WAY 18 (Exploratory session):**
-- `qa-artifacts/explore/<RUN_ID>/session.yaml` + `notes.md` + `A-NN.png`: pages, flows, anomalies with steps and evidence
-- `qa-artifacts/test-cases/regression/bug-<ref>/Test#01.{md,feature,steps.ts}`: one `@regression @exploratory` test per confirmed bug (`explore-<RUN_ID>-A<NN>/` until it's filed)
-- `qa-artifacts/sessions/explore-[timestamp].md`: bugs filed, observations not filed, coverage gap per flow
-- Tracker issues: one `bug` + `exploratory` issue per confirmed anomaly, with your approval
+- `qa-artifacts/explore/<RUN_ID>/session.yaml` (the test-writer handoff: pages, flows with checkpoints, validations, anomalies) + `tests.yaml` (what was written, run state) + `notes.md` + `A-NN.png`
+- `qa-artifacts/test-cases/explore-[charter]-[date]/Test#<nn>.{md,feature,steps.ts}`: one `@e2e @exploratory` test per confirmed flow or validation rule, plus an index with the `R-NN` table
+- `qa-artifacts/test-cases/regression/<RUN_ID>-A<NN>/Test#01.*`: one `@regression @exploratory` test per selected anomaly, renamed `bug-<ref>/` once filed
+- `qa-artifacts/sessions/explore-[timestamp].md`: tests written + last result, bugs filed, observations not filed, coverage gap
+- Tracker issues (only after a run, with your approval): one `bug` + `exploratory` issue per confirmed anomaly; optional `test-plan` issue
 
 **WAY 9–16:** verify report + issue comments/labels (9) · `qa-tests/` + CI include in the app repo (10) · MR/PR comment + `sessions/change-*.md` (11) · `releases/<milestone>-<date>.md` (12) · `@quarantine` tags + `flaky-test` issues + `sessions/flaky-*.md` (13) · `traceability/<ref>-<date>.md` (14) · `load-tests/<api>-<date>/` scripts + summaries (15) · healed test files + `sessions/heal-*.md` (16)
 
@@ -541,7 +551,7 @@ All 10 sub-agents live in `.claude/agents/`. They are invoked automatically by t
 ---
 
 ### `test-writer`
-**Used by:** WAY 1, WAY 2, WAY 3 and 18 (regression tests), WAY 4, WAY 17 (integration and E2E API workflows)
+**Used by:** WAY 1, WAY 2, WAY 3 (regression test), WAY 4, WAY 17 (integration and E2E API workflows), WAY 18 (flow and anomaly tests from the exploration handoff)
 
 The single test-authoring agent for the whole project — first analyzes the requirements into happy path / negative / edge / boundary / security / permission scenarios (mandatory input, ID, upload and numeric checks), then writes **both** browser and API scenarios, always as a `Test#<nn>.{md,feature,steps.ts}` triple: Gherkin `.feature` + a real `playwright-bdd` step-definition file (`page` fixture for UI, `request` fixture for API). Every UI scenario that navigates gets a built-in accessibility step (`@axe-core/playwright`, WCAG 2.0 A/AA + best-practice) — there's no separate a11y pass. Every API scenario is tagged `@api` and gets at least 10 mandatory cases per endpoint (happy path, auth failures, missing/invalid fields, IDOR, schema validation, perf threshold, and boundary Outlines built from the spec's schema constraints; +3 for POST/PUT). Replaces the former `e2e-test-writer`, `api-test-writer`, and `integration-test-writer`.
 
@@ -564,7 +574,7 @@ Works from Playwright's `error-context.md`, which holds the failing locator and 
 ### `exploratory-tester`
 **Used by:** WAY 18
 
-The only agent that drives a browser live, through a Playwright MCP server defined in its own frontmatter (clone) or bundled by the plugin, so its tools never load into the main session or any other agent. Works a charter within an action budget, maps pages and flows from accessibility snapshots, applies heuristics and oracles, re-checks each anomaly from a clean start, and returns YAML with reproducible steps (role + accessible name per element). It has no shell, never files anything, never writes tests, stays on the target origin, and skips destructive actions unless the user allowed them.
+The only agent that drives a browser live, through a Playwright MCP server defined in its own frontmatter (clone) or bundled by the plugin, so its tools never load into the main session or any other agent. Works a charter within an action budget, maps pages and flows from accessibility snapshots, applies heuristics and oracles, re-checks each anomaly from a clean start, and returns a `test-writer` handoff: flows with preconditions, steps (role + accessible name), data and checkpoints, observed validation rules, and anomalies. It has no shell, never files anything, never writes tests, stays on the target origin, and skips destructive actions unless the user allowed them.
 
 ---
 

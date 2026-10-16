@@ -1,6 +1,6 @@
 ---
 name: requirements-analysis
-description: Reference only — the single definition of how requirements are analyzed before tests or stories are written — intake (text, issue, enhanced story, spec) into one requirements model, the readiness gate (Missing Information, vague wording), requirement IDs (AC-NN from stories, R-NN derived from plain text), the scenario categories and tag mapping, and the per-element test checklists. Applied inline by e2e-session, write-tests, integration-tests and traceability; read by test-writer, user-story-enhancer and user-story-format. Not a workflow on its own.
+description: Reference only — the single definition of how requirements are analyzed before tests or stories are written — intake (text, issue, enhanced story, spec, exploration session) into one requirements model, the readiness gate (Missing Information, vague wording), requirement IDs (AC-NN from stories, R-NN derived from plain text), the scenario categories and tag mapping, and the per-element test checklists. Applied inline by e2e-session, write-tests, integration-tests and traceability; read by test-writer, user-story-enhancer and user-story-format. Not a workflow on its own.
 ---
 
 # requirements-analysis
@@ -17,6 +17,7 @@ When a rule changes, change it here only.
 | **Issue without an AC table** | `R-NN`, derived (§3) | — | derived (§2) |
 | **Plain text** | `R-NN`, derived (§3) | — | derived (§2) |
 | **OpenAPI spec only** | none: operations are the units, tests are `**Covers:** untraced` | the spec's operations; each request property and parameter is an element whose schema keywords are its stated limits (§5, OpenAPI schema constraints) | — |
+| **Exploration session** (WAY 18 `session.yaml`) | `R-NN`, derived: one per completed flow not already covered, one per field's group of `validations`. They describe the app's **current** behavior, so the user confirms each is intended (§3) | the flow's steps and checkpoints, the validation inputs | none beyond that confirmation; anomalies are handled like bug reports |
 | **Bug report** (WAY 3 regression test) | none: the one requirement is the bug's expected result, tests are `**Covers:** untraced` | the reproduction steps | `bug-report`'s own checks (it asks when Observe or the expected result is missing) |
 
 A spec given **with** a story or text adds API context. The IDs still come from the story or text.

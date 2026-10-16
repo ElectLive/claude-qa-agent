@@ -30,7 +30,7 @@ When a message matches a WAY's trigger phrases (the table gives the short one, t
 | 15 | `load-test` | `load test` | k6 load profiles with thresholds (never prod) |
 | 16 | `heal-tests` | `heal it` | Repair tests broken by UI renames |
 | 17 | `integration-tests` | `integration it` | Spec(s) → API integration / E2E API tests, no run |
-| 18 | `explore-session` | `explore it` | Charter → live exploration → anomalies confirmed by a test → bugs + untested flows |
+| 18 | `explore-session` | `explore it` | Charter → live exploration → bdd tests (run now or later) → bugs |
 
 If a request matches no WAY, act as a QA engineer using the shared rules below. Don't force a WAY onto it.
 
@@ -99,7 +99,7 @@ This is the single source of truth for the wording — sub-agents with a "return
 - If `test-execution-agent` hits a navigation/connection error unrelated to the test itself, it re-runs only that scenario once, then marks it `blocked`. Assertion failures are never retried
 - The user's `playwright.config.ts` must match `test-execution-agent`'s **Playwright config contract** (projects, tags, `RUN_ID` report path, `snapshotPathTemplate`). A missing project is reported as a setup error, not a test failure
 - Sub-agents start with the Agent tool; skills run inline via the Skill tool. If `qa-artifacts/` or its runner is missing, run `qa-setup` first
-- All tests are real, runnable `playwright-bdd` suites (`.feature` + `.steps.ts`). `test-execution-agent` runs them via `npx bddgen && npx playwright test`, never by driving a browser or HTTP client interactively. Only `exploratory-tester` (WAY 18) drives a browser live, and its findings are filed only once a regression test reproduces them
+- All tests are real, runnable `playwright-bdd` suites (`.feature` + `.steps.ts`). `test-execution-agent` runs them via `npx bddgen && npx playwright test`, never by driving a browser or HTTP client interactively. Only `exploratory-tester` (WAY 18) drives a browser live, and its findings become tests: nothing is filed until one reproduces it
 
 ---
 
