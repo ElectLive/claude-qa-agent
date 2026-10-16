@@ -21,7 +21,8 @@ Thanks for helping QA engineers everywhere test faster. This project is a set of
 - ★ **Plugin-safe.** The repo root is also the `qa-agent` plugin:
   - a new agent file must be added to the `agents` list in `.claude-plugin/plugin.json`
   - refer to files inside this repo as `${CLAUDE_PLUGIN_ROOT}/…`, never as a relative path
-  - an agent that lists GitLab tools in `tools:` lists both `mcp__gitlab__<tool>` (clone) and `mcp__plugin_qa-agent_gitlab__<tool>` (plugin)
+  - an agent that lists GitLab or Playwright MCP tools in `tools:` lists both `mcp__<server>__<tool>` (clone) and `mcp__plugin_qa-agent_<server>__<tool>` (plugin)
+  - plugin agents ignore `mcpServers` in frontmatter: an agent-scoped MCP server (as in `exploratory-tester`) must also be in `plugin.json` → `mcpServers`, with the same args
   - `CLAUDE.md` stays under ~9,500 characters, because the plugin hook injects it and Claude Code caps hook context at 10,000
 - Test IDs are `Test#<nn>`. Labels come only from the `tracker` skill's label conventions. Never call a provider directly from a WAY: use a `tracker` operation
 - Outward-facing actions (closing issues, posting on MRs, quarantining, heavy load tests) need the user's confirmation unless the WAY says otherwise

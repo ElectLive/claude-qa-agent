@@ -11,6 +11,7 @@ Run once per project. Ask before changing anything that already exists.
 - If `qa-artifacts/playwright.config.ts` is missing, copy `${CLAUDE_PLUGIN_ROOT}/runner-template/` (`package.json`, `playwright.config.ts`, `README.md`) into it
 - If a config already exists, compare it with the **Playwright config contract** in `test-execution-agent` and list the differences. Don't overwrite it
 - From `qa-artifacts/`: `npm install`, then `npx playwright install chromium`. Report `npx playwright --version`
+- For WAY 18 (exploratory) only, install the Playwright MCP's own browser: `npx -y @playwright/mcp@0.0.83 install-browser chrome-for-testing`
 
 ## 2. Providers
 Ask, or detect from `git remote -v` and the connected MCP servers, then confirm:
@@ -27,6 +28,8 @@ STAGING_URL=
 PROD_URL=
 FEATURE_BASE_URL=          # preview apps: FEATURE_BASE_URL/<branch>
 API_TEST_TOKEN=            # test-account token for API tests, never a real user's
+UI_TEST_USER=              # optional test account for signed-in UI regressions and WAY 18 exploration
+UI_TEST_PASSWORD=
 API_TEST_TOKEN_B=          # optional second test account (WAY 17 ownership workflows)
 # <SERVICE>_BASE_URL= / <SERVICE>_TOKEN=   # E2E API only, one pair per service (ORDERS_BASE_URL…)
 API_PERF_THRESHOLD_MS=2000

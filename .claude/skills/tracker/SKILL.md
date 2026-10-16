@@ -46,14 +46,14 @@ Always report refs back in the provider's own format (`#143`, `PROJ-143`, `!87`)
 
 | Operation | Used by WAY | Notes |
 |---|---|---|
-| `issue.create(title, body, labels)` → ref + URL | 1, 2, 3, 4, 7, 8, 12, 13 | body is Markdown; the provider skill converts it if the tracker needs another format |
+| `issue.create(title, body, labels)` → ref + URL | 1, 2, 3, 4, 7, 8, 12, 13, 18 | body is Markdown; the provider skill converts it if the tracker needs another format |
 | `issue.get(ref)` → title, body, labels, state, milestone, links | 1, 4, 6, 9, 14 | |
 | `issue.update(ref, body?, labels+?, labels-?)` | 6, 9 | body is a **full replace**: write the watermark again every time |
 | `issue.comment(ref, body)` | 1, 6, 9 | |
 | `issue.close(ref, comment)` / `issue.reopen(ref, comment)` | 9, 13 | outward-facing: only when the WAY says so, always with a comment |
-| `issue.list(filters)` | 9, 12, 14 | filters: labels, milestone, state, text search |
+| `issue.list(filters)` | 9, 12, 14, 18 | filters: labels, milestone, state, text search |
 | `issue.link(ref, other_ref)` | 1, 4 | test-plan ↔ test-case, bug ↔ test-case |
-| `file.attach(path)` → Markdown snippet or link | 1, 2, 3, 9 | see §5 |
+| `file.attach(path)` → Markdown snippet or link | 1, 2, 3, 9, 18 | see §5 |
 | `change.get(ref)` → title, description, source branch, linked issues, changed files | 5, 11 | |
 | `change.diff(ref, files?)` | 5, 11 | only fetch the files you need |
 | `change.comment(ref, body)` | 1, 4, 5, 11 | |
@@ -71,14 +71,15 @@ Draw labels only from this set, unless a WAY says otherwise. On Jira they're lab
 
 | Label | Meaning | Set by |
 |---|---|---|
-| `bug` | Any filed defect | WAY 1/2/3 |
-| `sev-1` / `sev-2` / `sev-3` / `sev-4` | Severity, from the `bug-report` skill | WAY 1/2/3 |
-| `p1` / `p2` / `p3` | Priority, from the `bug-report` skill | WAY 1/2/3 |
+| `bug` | Any filed defect | WAY 1/2/3/18 |
+| `sev-1` / `sev-2` / `sev-3` / `sev-4` | Severity, from the `bug-report` skill | WAY 1/2/3/18 |
+| `p1` / `p2` / `p3` | Priority, from the `bug-report` skill | WAY 1/2/3/18 |
 | `test-plan` | Index issue summarizing a set of test cases | WAY 1/4 |
 | `test-case` | One issue per generated `Test#<nn>` | WAY 1 |
 | `api` | Bug or test case from API testing | WAY 2 |
-| `e2e` | Bug or test case from browser testing | WAY 1 |
-| `accessibility` | Bug from an axe-core violation | WAY 1 |
+| `e2e` | Bug or test case from browser testing | WAY 1/18 |
+| `accessibility` | Bug from an axe-core violation | WAY 1/18 |
+| `exploratory` | Bug found in an exploratory session (and confirmed by a regression test) | WAY 18 |
 | `qa-session-report` | End-of-session summary issue | WAY 1/2 |
 | `benchmark` | Competitor benchmark report, or a gap backlog index | WAY 7/8 |
 | `user-story` | User story written from a benchmark gap | WAY 8 |

@@ -6,7 +6,7 @@ An autonomous QA agent for DevOps-oriented teams. Give it an issue (GitLab, GitH
 
 [![validate](https://github.com/GhassenAZZOUZ/claude-qa-agent/actions/workflows/validate.yml/badge.svg)](https://github.com/GhassenAZZOUZ/claude-qa-agent/actions/workflows/validate.yml)
 
-**Quick start:** [Setup](#setup) · **Modes:** [Seventeen Modes](#seventeen-modes) · **See the output:** [examples/](examples/) · **Help wanted:** [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
+**Quick start:** [Setup](#setup) · **Modes:** [Eighteen Modes](#eighteen-modes) · **See the output:** [examples/](examples/) · **Help wanted:** [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
 
 ---
 
@@ -29,6 +29,7 @@ From one user story (*"apply a discount code at checkout"*), the agent produces:
 | Tests in the pipeline | Manual | **`ci setup` writes the CI config for GitLab CI, GitHub Actions, Azure Pipelines or Bitbucket Pipelines** |
 | Broken selectors | Re-write by hand | **`heal it` repairs renamed/moved elements from Playwright's failure snapshot** |
 | Flaky tests | File bogus bugs | **`flaky` finds them across runs and quarantines them** |
+| Exploratory testing | Manual, or an LLM clicking around and filing every hunch | **`explore it` drives a real browser against a charter; a finding is filed only once a regression test reproduces it** |
 
 ---
 
@@ -60,7 +61,7 @@ Every generated `.feature`/`.steps.ts` test file starts with the same attributio
 
 ---
 
-## Seventeen Modes
+## Eighteen Modes
 
 Each mode ("WAY") is a skill. Type a trigger phrase, or `/<skill>` directly (`/qa-agent:<skill>` with the plugin). Only the triggered WAY's instructions are loaded.
 
@@ -84,6 +85,7 @@ Each mode ("WAY") is a skill. Type a trigger phrase, or `/<skill>` directly (`/q
 | 15 | `load-test` | `load test` | k6 smoke/load/stress/spike/soak with p95 + error-rate thresholds (never prod) |
 | 16 | `heal-tests` | `heal it` | Repair tests broken by UI renames, with approval |
 | 17 | `integration-tests` | `integration it` / `e2e api it` | One spec → API integration tests; several specs → E2E API tests across services (async effects polled), no run |
+| 18 | `explore-session` | `explore it` | Charter → live browser exploration → `test-writer` turns flows + anomalies into bdd tests → run now or later → bugs (with approval) |
 
 ### Test levels
 
@@ -106,6 +108,7 @@ The identifiers `e2e` (Playwright project, tag, issue label) and `e2e-session` k
 | [Playwright](https://playwright.dev/) + [playwright-bdd](https://github.com/vitalets/playwright-bdd) | Real, runnable tests: Gherkin + compiled step definitions, run with `npx playwright test` |
 | [@axe-core/playwright](https://github.com/dequelabs/axe-core-npm) | Accessibility check inside every browser scenario |
 | Your providers' tools | GitLab: bundled [GitLab MCP](https://github.com/zereight/gitlab-mcp). GitHub: [`gh`](https://cli.github.com/). Jira: Atlassian MCP or REST. Azure DevOps: [`az`](https://learn.microsoft.com/cli/azure/) + `azure-devops` extension. Bitbucket: REST |
+| [Playwright MCP](https://github.com/microsoft/playwright-mcp) (optional) | Live browser for exploratory testing, WAY 18 only (scoped to `exploratory-tester`) |
 | [k6](https://k6.io/) (optional) | Load testing, WAY 15 only |
 
 All tools except Claude are free and open source.
@@ -116,17 +119,17 @@ All tools except Claude are free and open source.
 
 ```
 devops-qa-agent/
-├── CLAUDE.md                          # Routing table (17 WAYs → skills, one trigger each) + shared rules + watermark policy
+├── CLAUDE.md                          # Routing table (18 WAYs → skills, one trigger each) + shared rules + watermark policy
 ├── README.md                          # This file
 ├── LICENSE · CONTRIBUTING.md · SECURITY.md · CODE_OF_CONDUCT.md · CHANGELOG.md
-├── .claude-plugin/                    # plugin.json (manifest, bundled GitLab MCP, install-time settings) + marketplace.json
+├── .claude-plugin/                    # plugin.json (manifest, bundled GitLab + Playwright MCP, install-time settings) + marketplace.json
 ├── hooks/hooks.json                   # Plugin SessionStart hook → scripts/session-context.mjs prints CLAUDE.md
 ├── runner-template/                   # package.json + playwright.config.ts meeting the config contract → copy to qa-artifacts/
 ├── scripts/
 │   ├── validate.py                    # Frontmatter, names, CLAUDE.md references + size, triggers, plugin manifest, watermarks (CI)
 │   ├── session-context.mjs            # Plugin hook: loads CLAUDE.md rules into each session
 │   └── selftest.mjs                   # Runs test-writer's templates end to end on a demo app (CI)
-├── evals/                             # `claude plugin eval` cases: routing, readiness gate, spec boundaries, WAY 17 end to end (CI: weekly / `run-evals` label)
+├── evals/                             # `claude plugin eval` cases: routing, readiness gate, spec boundaries, WAY 17 and WAY 18 handoff end to end (CI: weekly / `run-evals` label)
 ├── .github/                           # CI workflows (validate, evals), issue + PR templates
 ├── .env.example                       # Copy to .env and fill in your values
 ├── .mcp.example.json                  # Copy to .mcp.json (GitLab MCP only)
@@ -136,7 +139,7 @@ devops-qa-agent/
 ├── .claude/
 │   ├── settings.example.json          # Copy to settings.json and fill in
 │   ├── skills/
-│   │   ├── qa-setup/ e2e-session/ … integration-tests/   # WAY 0–17 skills, one folder each (see "Sixteen Modes")
+│   │   ├── qa-setup/ e2e-session/ … explore-session/   # WAY 0–18 skills, one folder each (see "Eighteen Modes")
 │   │   ├── flaky-triage/flaky.mjs     # Run-history aggregator used by WAY 13
 │   │   ├── tracker/                   # Shared: provider-neutral issue / MR-PR / CI operations, labels, failures
 │   │   ├── provider-gitlab/ provider-github/ provider-jira/ provider-azure-devops/ provider-bitbucket/
@@ -420,6 +423,28 @@ And within 10 seconds GET "stock:/v1/reservations?orderId={orderId}" has field "
 ```
 These are slower and depend on every service being up: run them on a schedule, not on each MR (`--grep-invert @e2e-api`). Queue/DB assertions and contract tests (Pact) are out of scope.
 
+### WAY 18 — Exploratory Session
+
+```
+explore it checkout as a guest: pricing, discount codes, validation --env staging
+budget: 200
+```
+
+No requirements needed. `exploratory-tester` drives a real headless browser through a Playwright MCP server that only it can use, works the charter with test heuristics (boundary inputs, double submit, back/refresh mid-flow, deep links with other IDs, mobile width), and checks oracles after every action: console errors, 4xx/5xx, broken links, raw `undefined`/`NaN`/stack traces, nameless buttons and unlabeled fields in the accessibility snapshot.
+
+What it learns is a **handoff to `test-writer`**: each flow with its preconditions, steps (role + accessible name), test data and checkpoints to assert, the validation messages it saw, and each anomaly (`A-NN`) with observed vs expected. You confirm the derived `R-NN` table (these describe what the app does *today*, so you say what's intended) and pick the anomalies. `test-writer` then writes ordinary `playwright-bdd` tests:
+- **Flow tests** (`@e2e @exploratory`, `Covers: R-NN`): pin today's confirmed behavior, so they pass now and catch regressions later
+- **Anomaly tests** (`@regression @exploratory`): assert the expected behavior, so they fail while the anomaly exists
+
+Nothing runs unless you ask. Run them now, or later:
+```
+explore it run explore-2026-10-16-14-30     # run, confirm anomalies, offer to file bugs
+npx bddgen && BASE_URL=https://staging.myapp.com npx playwright test --project=e2e test-cases/explore-checkout-2026-10-16/   # by hand
+```
+or ship them with the rest of the suite via `ci setup`. Only an anomaly whose test fails is a bug; it's filed with your OK and its folder becomes `regression/bug-<ref>/`, so `verify it <ref>` works later. `trace it <flow folder>` traces the `R-NN`s like any other.
+
+Safe by default: no deletes, payments, emails or account changes unless you say `allow: delete, payment`; `--env prod` is read-only and needs your confirmation; signed-in exploration and tests use `UI_TEST_USER` / `UI_TEST_PASSWORD` from `.env` (a test account).
+
 ---
 
 ## What the Agent Produces
@@ -469,6 +494,13 @@ These are slower and depend on every service being up: run them on a schedule, n
 - `qa-artifacts/test-cases/[flow-slug]-e2e-api-[date]/…` — same, for several specs, tagged `@api @e2e-api`
 - Optional `test-plan` issue and MR/PR comment (`file: true`)
 
+**WAY 18 (Exploratory session):**
+- `qa-artifacts/explore/<RUN_ID>/session.yaml` (the test-writer handoff: pages, flows with checkpoints, validations, anomalies) + `tests.yaml` (what was written, run state) + `notes.md` + `A-NN.png`
+- `qa-artifacts/test-cases/explore-[charter]-[date]/Test#<nn>.{md,feature,steps.ts}`: one `@e2e @exploratory` test per confirmed flow or validation rule, plus an index with the `R-NN` table
+- `qa-artifacts/test-cases/regression/<RUN_ID>-A<NN>/Test#01.*`: one `@regression @exploratory` test per selected anomaly, renamed `bug-<ref>/` once filed
+- `qa-artifacts/sessions/explore-[timestamp].md`: tests written + last result, bugs filed, observations not filed, coverage gap
+- Tracker issues (only after a run, with your approval): one `bug` + `exploratory` issue per confirmed anomaly; optional `test-plan` issue
+
 **WAY 9–16:** verify report + issue comments/labels (9) · `qa-tests/` + CI include in the app repo (10) · MR/PR comment + `sessions/change-*.md` (11) · `releases/<milestone>-<date>.md` (12) · `@quarantine` tags + `flaky-test` issues + `sessions/flaky-*.md` (13) · `traceability/<ref>-<date>.md` (14) · `load-tests/<api>-<date>/` scripts + summaries (15) · healed test files + `sessions/heal-*.md` (16)
 
 ---
@@ -514,12 +546,12 @@ Sev-3 (Medium) / P2 — This sprint
 
 ## Sub-Agents Reference
 
-All 9 sub-agents live in `.claude/agents/`. They are invoked automatically by the orchestrator — you never call them directly. Work that only applies a rubric or template to data the main session already holds is a **skill** instead (see Skills Reference below) — no sub-agent cold start, no isolation needed. Tracker and code-host mechanics live in the shared `tracker` skill and its `provider-*` skills.
+All 10 sub-agents live in `.claude/agents/`. They are invoked automatically by the orchestrator — you never call them directly. Work that only applies a rubric or template to data the main session already holds is a **skill** instead (see Skills Reference below) — no sub-agent cold start, no isolation needed. Tracker and code-host mechanics live in the shared `tracker` skill and its `provider-*` skills.
 
 ---
 
 ### `test-writer`
-**Used by:** WAY 1, WAY 2, WAY 3 (regression test), WAY 4, WAY 17 (integration and E2E API workflows)
+**Used by:** WAY 1, WAY 2, WAY 3 (regression test), WAY 4, WAY 17 (integration and E2E API workflows), WAY 18 (flow and anomaly tests from the exploration handoff)
 
 The single test-authoring agent for the whole project — first analyzes the requirements into happy path / negative / edge / boundary / security / permission scenarios (mandatory input, ID, upload and numeric checks), then writes **both** browser and API scenarios, always as a `Test#<nn>.{md,feature,steps.ts}` triple: Gherkin `.feature` + a real `playwright-bdd` step-definition file (`page` fixture for UI, `request` fixture for API). Every UI scenario that navigates gets a built-in accessibility step (`@axe-core/playwright`, WCAG 2.0 A/AA + best-practice) — there's no separate a11y pass. Every API scenario is tagged `@api` and gets at least 10 mandatory cases per endpoint (happy path, auth failures, missing/invalid fields, IDOR, schema validation, perf threshold, and boundary Outlines built from the spec's schema constraints; +3 for POST/PUT). Replaces the former `e2e-test-writer`, `api-test-writer`, and `integration-test-writer`.
 
@@ -536,6 +568,13 @@ The single test-execution agent — runs every `.feature`/`.steps.ts` pair `test
 **Used by:** WAY 1, 9, 11, 16
 
 Works from Playwright's `error-context.md`, which holds the failing locator and the page's accessibility snapshot at the moment of failure, so no browser or MCP server is needed. It classifies each locator failure as healable (renamed/moved), ambiguous, or not healable (element missing → likely a product bug), proposes the minimal `.feature`/step change, and in apply mode edits and re-runs the one scenario. It never touches expected values or `@visual` baselines.
+
+---
+
+### `exploratory-tester`
+**Used by:** WAY 18
+
+The only agent that drives a browser live, through a Playwright MCP server defined in its own frontmatter (clone) or bundled by the plugin, so its tools never load into the main session or any other agent. Works a charter within an action budget, maps pages and flows from accessibility snapshots, applies heuristics and oracles, re-checks each anomaly from a clean start, and returns a `test-writer` handoff: flows with preconditions, steps (role + accessible name), data and checkpoints, observed validation rules, and anomalies. It has no shell, never files anything, never writes tests, stays on the target origin, and skips destructive actions unless the user allowed them.
 
 ---
 
@@ -611,7 +650,7 @@ The single set of rules for analyzing requirements, so stories are scored agains
 5. **Checklists per element**: input field, ID/resource, upload, numeric, auth/session, concurrency, backend failure
 
 ### WAY skills
-The 17 WAY skills hold each mode's full procedure; see **Seventeen Modes** above.
+The 18 WAY skills hold each mode's full procedure; see **Eighteen Modes** above.
 
 ---
 
@@ -629,6 +668,8 @@ The 17 WAY skills hold each mode's full procedure; see **Seventeen Modes** above
 | `bddgen`: "Multiple definitions matched" | The same step is defined twice; keep generic steps only in `steps/` |
 | Visual tests fail in CI but pass locally | Baselines are OS-specific; run the `qa-update-baselines` job and commit its output |
 | WAY 15 writes scripts but doesn't run | Install k6 or Docker (`grafana/k6`) |
+| WAY 18: `Browser "chrome-for-testing" is not installed` | `npx -y @playwright/mcp@0.0.83 install-browser chrome-for-testing` (or set `PLAYWRIGHT_MCP_EXECUTABLE_PATH` to an existing Chromium) |
+| WAY 18: `Playwright MCP server not available` | Plugin: `/mcp` should list `playwright`. Clone: the server is defined in `exploratory-tester`'s frontmatter and only loads once the project folder is trusted |
 | GitLab MCP server not connecting | Type `/mcp` in Claude Code panel to verify server status |
 | CI logs truncated | `ci-diagnostician` reads the log tail first and pages back. On GitLab, if pipeline tools are missing, check `GITLAB_TOOLSETS` = `core,issues,merge_requests,pipelines,ci` and `GITLAB_TOOLS=upload_markdown` |
 
@@ -641,7 +682,6 @@ Help wanted. Open a "New WAY / feature" issue to discuss first.
 - **More providers.** Bitbucket Data Center, Gitea/Forgejo, Linear, YouTrack: each is one `provider-<name>` skill (see CONTRIBUTING)
 - **Field-testing the provider adapters.** GitLab is verified against its API schemas and GitHub's read paths against a live repo; Jira, Azure DevOps and Bitbucket need real-project reports
 - **E2E API, beyond the API surface.** Assertions on queues/topics and databases, and consumer-driven contract tests (Pact), for flows WAY 17 can only observe through APIs
-- **Exploratory tester.** Explore an app with no requirements and report bugs and untested flows (needs a browser-driving MCP server scoped to that agent)
 - **Claude Code plugin packaging.** Install with one command instead of cloning
 - **More trigger languages.** French, Spanish, German, Portuguese… trigger phrases in the skill descriptions
 - **Mobile.** Appium or Maestro runner alongside Playwright

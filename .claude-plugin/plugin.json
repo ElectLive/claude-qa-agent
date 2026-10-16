@@ -2,7 +2,7 @@
   "name": "qa-agent",
   "displayName": "DevOps QA Agent",
   "version": "1.2.0",
-  "description": "QA workflows for Claude Code on any provider (GitLab, GitHub, Jira, Azure DevOps, Bitbucket): Playwright-BDD UI E2E, API & API integration tests with accessibility checks, bug filing, fix verification, MR/PR test impact, flaky triage, test healing, traceability, release readiness, load tests, CI setup.",
+  "description": "QA workflows for Claude Code on any provider (GitLab, GitHub, Jira, Azure DevOps, Bitbucket): Playwright-BDD UI E2E, API & API integration tests with accessibility checks, bug filing, fix verification, MR/PR test impact, flaky triage, test healing, exploratory testing, traceability, release readiness, load tests, CI setup.",
   "author": {
     "name": "Ghassen Azzouz",
     "url": "https://github.com/GhassenAZZOUZ"
@@ -15,6 +15,7 @@
     "azure-devops",
     "bitbucket",
     "devops",
+    "exploratory-testing",
     "gherkin",
     "github",
     "gitlab",
@@ -32,6 +33,7 @@
     "./.claude/agents/benchmark-gap-story-writer.md",
     "./.claude/agents/ci-diagnostician.md",
     "./.claude/agents/competitor-benchmark.md",
+    "./.claude/agents/exploratory-tester.md",
     "./.claude/agents/load-test-writer.md",
     "./.claude/agents/mr-test-impact.md",
     "./.claude/agents/test-execution-agent.md",
@@ -52,6 +54,17 @@
         "GITLAB_TOOLSETS": "core,issues,merge_requests,pipelines,ci",
         "GITLAB_TOOLS": "upload_markdown"
       }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.83",
+        "--headless",
+        "--isolated",
+        "--output-dir",
+        "qa-artifacts/explore/.mcp"
+      ]
     }
   },
   "userConfig": {

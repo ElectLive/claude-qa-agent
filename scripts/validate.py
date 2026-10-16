@@ -74,13 +74,20 @@ listed = {os.path.basename(a)[:-3] for a in manifest.get('agents', [])}
 if listed != names['agent']:
     errors.append(f'.claude-plugin/plugin.json agents mismatch: missing {sorted(names["agent"] - listed)}, extra {sorted(listed - names["agent"])}')
 
-# Agents restricted to GitLab tools must list both name forms (clone: mcp__gitlab__*, plugin: mcp__plugin_qa-agent_gitlab__*)
+# Agents restricted to bundled MCP tools must list both name forms (clone: mcp__<server>__*, plugin: mcp__plugin_qa-agent_<server>__*)
+plugin_servers = set(manifest.get('mcpServers', {}))
 for p in glob.glob('.claude/agents/*.md'):
     fm = yaml.safe_load(open(p, encoding='utf-8').read().split('---')[1])
     tools = {t.strip() for t in str(fm.get('tools', '')).split(',')}
     for t in tools:
-        if t.startswith('mcp__gitlab__') and t.replace('mcp__gitlab__', 'mcp__plugin_qa-agent_gitlab__') not in tools:
+        server = t.split('__')[1] if t.startswith('mcp__') and t.count('__') >= 2 else None
+        if server in plugin_servers and t.replace(f'mcp__{server}__', f'mcp__plugin_qa-agent_{server}__') not in tools:
             errors.append(f'{p}: {t} has no plugin-form twin')
+    # An inline MCP server (clone) is ignored for plugin agents, so the plugin manifest must bundle the same one
+    for entry in fm.get('mcpServers') or []:
+        for name, cfg in (entry.items() if isinstance(entry, dict) else []):
+            if manifest.get('mcpServers', {}).get(name, {}).get('args') != cfg.get('args'):
+                errors.append(f'{p}: inline MCP server `{name}` differs from .claude-plugin/plugin.json mcpServers.{name}')
 
 # Every provider value the tracker skill accepts needs a provider-<value> skill
 tracker = open('.claude/skills/tracker/SKILL.md', encoding='utf-8').read()
