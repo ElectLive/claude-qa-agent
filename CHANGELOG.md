@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.3.0 — 2026-10-16
+
+WAY 18 (exploratory session): live exploration with a scoped Playwright MCP server, handed to `test-writer` as runnable playwright-bdd tests you run now or later.
+
 - **WAY 18 `explore-session`** (`explore it`): exploratory testing with no requirements. New `exploratory-tester` agent drives a headless browser through a Playwright MCP server (`@playwright/mcp@0.0.83`) scoped to it: defined inline in its frontmatter from a clone, bundled in `plugin.json` for the plugin (plugin agents ignore frontmatter `mcpServers`). Charter + action budget → pages, flows, anomalies `A-NN` with reproducible steps and evidence (console errors, 4xx/5xx, broken links, raw error text, validation, state, access, a11y from the snapshot, UX)
 - **Exploration → tests, run later**: the explorer's output is a `test-writer` handoff (flows `F-NN` with preconditions, steps, data, checkpoints; observed validations; anomalies `A-NN`). The user confirms the derived `R-NN` (today's behavior, marked as such) and picks anomalies; `test-writer` (new input form 5) writes `@e2e @exploratory` flow tests in `test-cases/explore-<charter>-<date>/` and `@regression @exploratory` anomaly tests in `regression/<RUN_ID>-A<NN>/`. Nothing runs by default: `run: now`, `explore it run <RUN_ID>` (resumes from `tests.yaml`), plain `npx playwright test`, or CI via `ci setup`
 - No live finding is filed on its own: only an anomaly whose test fails (or a flow test that regresses) is filed, with approval and label `exploratory`; the anomaly's folder becomes `regression/bug-<ref>/` so `verify it` picks it up. `requirements-analysis` gains the exploration-session intake row. New eval `explore-handoff-to-tests` (handoff → flow, validation and anomaly tests, no run)
