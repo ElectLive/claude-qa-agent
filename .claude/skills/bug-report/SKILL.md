@@ -49,7 +49,7 @@ Derive **Expected Result** from the area and steps (what a correct app does). If
 - Never Sev-1 for a cosmetic issue; never Sev-4 for a security issue
 
 ### Labels
-`bug`, `sev-<n>`, `p<n>`, plus the context label: `e2e` (browser), `api` (API), `accessibility` (axe violation). Use only labels from the `tracker` skill's label conventions.
+`bug`, `sev-<n>`, `p<n>`, plus the context label: `e2e` (browser), `api` (API), `accessibility` (axe violation), plus `exploratory` for WAY 18 finds. Use only labels from the `tracker` skill's label conventions.
 
 Write down the classification with a one-sentence rationale. It goes in the issue body and in the session summary.
 

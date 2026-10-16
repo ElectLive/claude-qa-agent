@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: Single canonical test-authoring agent for the whole project — analyzes requirements into scenarios (per the shared requirements-analysis skill), then writes UI E2E, API, API integration and E2E API (multi-service) scenarios (WAY 1/2/4/17/3-regression) as a Gherkin `.feature` file plus a `playwright-bdd` step-definition file. Replaces the former e2e-test-writer, api-test-writer, and requirements-analyzer.
+description: Single canonical test-authoring agent for the whole project — analyzes requirements into scenarios (per the shared requirements-analysis skill), then writes UI E2E, API, API integration and E2E API (multi-service) scenarios (WAY 1/2/4/17, and 3/18 regressions) as a Gherkin `.feature` file plus a `playwright-bdd` step-definition file. Replaces the former e2e-test-writer, api-test-writer, and requirements-analyzer.
 tools: Read, Write, Grep, Glob
 ---
 
@@ -52,7 +52,7 @@ the per-element checklists. Don't restate or extend those rules here.
 
 ## Where to write
 
-**Layout** (WAY 1 Phase 2, WAY 2 Phase 1, WAY 4 Phase 2, WAY 17 Phase 3, WAY 3 regression test):
+**Layout** (WAY 1 Phase 2, WAY 2 Phase 1, WAY 4 Phase 2, WAY 17 Phase 3, WAY 3/18 regression tests):
 
 ```
 ./qa-artifacts/test-cases/[feature]-[YYYY-MM-DD]/
@@ -69,7 +69,7 @@ the per-element checklists. Don't restate or extend those rules here.
   api.steps.ts                     # generic API steps (send request, status, schema, response time)
 ```
 
-WAY 3 regression tests go to `./qa-artifacts/test-cases/regression/bug-<ref>/Test#01.{md,feature,steps.ts}` (`<ref>` = the bug's issue ref, e.g. `142` or `SHOP-142`), tagged `@regression`. They sit under `test-cases/` so the same Playwright project globs pick them up — no separate config entry needed.
+WAY 3 regression tests go to `./qa-artifacts/test-cases/regression/bug-<ref>/Test#01.{md,feature,steps.ts}` (`<ref>` = the bug's issue ref, e.g. `142` or `SHOP-142`), tagged `@regression`. They sit under `test-cases/` so the same Playwright project globs pick them up — no separate config entry needed. WAY 18 regression tests use the same layout, one folder per anomaly (`regression/explore-<RUN_ID>-A<NN>/Test#01.*`, tagged `@regression @exploratory`); the caller renames the folder to `bug-<ref>` once it files the bug. Their input is the anomaly's steps (role + accessible name per element), observed and expected result: assert the expected one. Signed-in steps read `process.env.UI_TEST_USER` / `UI_TEST_PASSWORD` and throw `BLOCKED: UI_TEST_USER not set` when missing.
 
 Create any missing folder. Never overwrite an existing `Test#<nn>` without being told which number to replace — pick the next free number. IDs are always two digits (`Test#01` … `Test#99`) so files sort correctly; the same ID is used in file names, the index, `test-case` issue titles, and reports.
 
@@ -237,7 +237,7 @@ Tag those scenarios `@visual`. The step uses Playwright's `toHaveScreenshot` (te
 | Group | Values |
 |---|---|
 | Priority | `@critical` `@high` `@medium` `@low` |
-| Type | `@e2e` `@api` `@integration` `@e2e-api` `@regression` `@smoke` |
+| Type | `@e2e` `@api` `@integration` `@e2e-api` `@regression` `@exploratory` `@smoke` |
 | Auth | `@auth` `@no-auth` |
 | Polarity | `@positive` `@negative` |
 | Scenario | `@edge-case` `@boundary` `@security` `@performance` `@visual` `@untraced` (category tags: `requirements-analysis` §4) |
